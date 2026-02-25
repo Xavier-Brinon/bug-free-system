@@ -1,0 +1,251 @@
+#+title: Research Summary: BookTab
+#+author: BookTab
+#+date: [2026-02-25 Tue]
+#+startup: indent
+#+options: toc:3 num:t ^:{}
+
+- *Project* :: BookTab — Firefox New Tab Book Tracker Extension
+- *Domain* :: Firefox browser extension / personal book tracker
+- *Researched* :: [2026-02-25 Tue]
+- *Confidence* :: HIGH
+
+* Executive summary
+
+BookTab occupies a completely unoccupied competitive niche: a local-first,
+no-account, offline-capable book tracker that surfaces your current read on
+every new tab open. Every major competitor (Goodreads, StoryGraph, Hardcover,
+Literal.club) is a social discovery platform requiring accounts and online
+access -- none integrates with the browser new tab. The recommended approach
+is a Firefox Manifest V3 extension using vanilla TypeScript + CSS (no UI
+framework), with all data stored in ~browser.storage.local~ and book metadata
+fetched from the Open Library API (no API key required). The architecture is
+intentionally minimal: a single privileged extension page (the new tab) that
+reads/writes storage directly -- no background script, no content scripts, no
+backend.
+
+The key engineering discipline is *schema-first development*. Because all
+user data lives in local extension storage and the primary backup mechanism
+is JSON export/import, the data schema must be versioned and migration-ready
+from day one. The build order follows a clear dependency graph: manifest +
+shell → data layer + schema → core UI (current book display) → book search
++ add → queue/notes/history → import/export.
+
+The most dangerous pitfalls are subtle and hard to retrofit: using
+=window.localStorage= instead of ~browser.storage.local~ (data wiped on
+privacy clears), inline JavaScript or CDN scripts (silently blocked by
+extension CSP), and a flat unversioned export schema (import breaks on first
+schema change). All three must be addressed in Phase 1 before any feature
+code is written.
+
+* Key findings
+
+** Recommended stack
+
+The stack is lean by design. Vite 7 with =vite-plugin-web-extension= handles
+multi-entry bundling and live reload. TypeScript 5.9 with
+=@types/webextension-polyfill= provides typed ~browser.*~ APIs, catching
+storage shape mistakes at compile time. The UI stays vanilla TypeScript and
+CSS; there is no routing, no complex component tree, and no server state.
+XState v5 manages all stateful logic as explicit machines and actors.
+
+Core technologies:
+- *Manifest V3* (Firefox 109+): GA standard since Feb 2023; no service
+  workers needed (Firefox MV3 uses event pages)
+- *TypeScript 5.9.3*: typed ~browser.*~ APIs via =@types/webextension-polyfill=
+- *Vite 7.3.1* + =vite-plugin-web-extension 4.5.0=: multi-entry bundling,
+  live reload, extension-aware output
+- =webextension-polyfill 0.12.0=: Promise-based ~browser.*~ API; use
+  everywhere, never ~chrome.*~
+- *~browser.storage.local~*: IndexedDB-backed; survives privacy wipes
+- *XState v5*: all stateful logic as machines/actors
+- *Vitest*: TDD; native ESM; same config as Vite
+- =zod 3.x=: runtime schema validation at import boundaries
+- =web-ext 9.3.0=: live reload, linting, packaging, AMO signing
+
+*What NOT to use:* =window.localStorage= (wiped on privacy clears),
+~chrome.*~ namespace, React (45KB runtime overhead), CDN scripts (blocked by
+CSP), =eval()= or dynamic code (banned in MV3).
+
+** Expected features
+
+The new tab constraint reshapes every feature decision. The UI is seen for
+~2 seconds before navigation -- value must be ambient and instant.
+
+Must have (table stakes):
+- New tab override -- the entire product premise
+- Status tracking (Want to Read / Reading / Read)
+- Manual book entry + optional search fallback
+- Current book hero display -- dominant visual
+- To-read queue
+- JSON export + import -- data ownership; the only backup mechanism
+
+Should have (differentiators):
+- Tags on books
+- "Why I want to read this" note -- unique intention-capture field
+- Queue priority reordering
+
+Defer to v2+:
+- Book search via Open Library API
+- Reading notes + review after finishing
+- Cover image caching
+- Multiple reading statuses (DNF, Paused)
+
+Anti-features (do not build):
+- Page/percentage progress tracking
+- Social features
+- Reading stats/analytics dashboard
+- Cloud sync / cross-device
+
+** Architecture approach
+
+BookTab uses a single privileged extension page (the new tab) with direct
+access to ~browser.storage.local~ -- no background script, no message
+passing, no content scripts. All data lives under one storage key
+(=booktab_data=) as a versioned JSON object.
+
+Major components:
+
+1. *=manifest.json=* -- declares extension; =chrome_url_overrides.newtab=;
+   =storage= + =host_permissions=
+2. *=storage.ts=* -- sole abstraction over ~browser.storage.local~; owns all
+   reads, writes, error handling
+3. *=schema.ts=* -- single source of truth for data shape, defaults, and
+   migration logic; =schemaVersion= field required from day 1
+4. *=api.ts=* -- stateless Open Library fetch wrapper; debounced search,
+   =User-Agent= header, cover domain handling
+5. *=app.ts=* -- XState root actor; orchestrates UI, handles user actions,
+   coordinates re-render
+6. *=ui/= modules* -- =currentBook.ts=, =queue.ts=, =notes.ts=, =history.ts=,
+   =bookForm.ts=, =importExport.ts=
+
+Data schema (locked in Phase 1):
+
+#+name: booktab-schema-summary
+#+begin_src typescript
+interface BookTabData {
+  schemaVersion: number;
+  books: Record<string, BookRecord>;
+  settings: UserSettings;
+}
+
+interface BookRecord {
+  id: string;
+  title: string;
+  authors: string[];
+  coverUrl?: string;
+  isbn?: string;
+  externalId?: string;
+  status: 'want_to_read' | 'reading' | 'read';
+  addedAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  tags: string[];
+  priority: number;
+  queueNote?: string;
+  readingNotes?: string;
+  review?: string;
+}
+#+end_src
+
+** Critical pitfalls
+
+1. *CSP blocks all inline JS and CDN scripts* -- Silent failures (buttons
+   do nothing). Fix in Phase 1: all JS in =.ts= files, all handlers via
+   ~addEventListener()~, no CDN dependencies.
+
+2. *=window.localStorage= wiped on privacy clear* -- User loses entire book
+   library. Fix in Phase 1: use ~browser.storage.local~ exclusively; grep
+   for =localStorage= must return zero results.
+
+3. *Async storage race conditions on new tab open* -- UI renders with empty
+   state before storage read resolves. Fix in Phase 1: show loading state
+   until first ~storage.get()~ resolves; gate all writes behind
+   =storageReady= (natural fit for XState =loading= → =ready= states).
+
+4. *Flat unversioned export schema* -- Import breaks on first schema change.
+   Fix in Phase 1: embed =schemaVersion: 1= from day one; write migration
+   layer before any schema change ships.
+
+5. *Open Library rate limits + missing cover domain* -- No debounce = rate
+   limited. Missing =covers.openlibrary.org= host permission breaks cover
+   display. Fix in Phase 2: 400--600ms debounce, =User-Agent= header, both
+   origins in =host_permissions=.
+
+6. *Import destroys data without warning* -- Replace-on-import is
+   catastrophic. Fix in Phase 6: auto-backup before import, strict schema
+   validation, confirmation dialog.
+
+* Implications for roadmap
+
+** Suggested phases
+
+Based on research, the architecture's dependency graph dictates build order:
+
+#+CAPTION: Phase ordering rationale
+| Phase | Name                        | Rationale                                              |
+|-------+-----------------------------+--------------------------------------------------------|
+|     1 | Tooling & Practice          | ADR infrastructure, Vitest + TDD locked in before any code |
+|     2 | Extension Scaffold          | Nothing works without CSP-safe extension loading and versioned schema |
+|     3 | Library CRUD                | Core data loop (add/edit/delete/status) before UI features |
+|     4 | New Tab Display             | Hero display requires books in storage (Phase 3 first) |
+|     5 | Queue                       | Queue view + intention notes; depends on library       |
+|     6 | Data Safety                 | Import/export last; requires schema to be fully stable |
+
+** Research flags
+
+Phases likely needing =/gsd-research-phase= during planning:
+- *None identified* -- all phases use well-documented Mozilla/MDN patterns,
+  standard storage APIs, and the Open Library API which has clear
+  documentation
+
+* Confidence assessment
+
+#+CAPTION: Research confidence by area
+| Area         | Confidence  | Notes                                                         |
+|--------------+-------------+---------------------------------------------------------------|
+| Stack        | HIGH        | All versions verified against npm registry Feb 2026           |
+| Features     | MEDIUM-HIGH | Goodreads, Hardcover, Literal.club accessed directly          |
+| Architecture | HIGH        | All structural patterns sourced from MDN official docs        |
+| Pitfalls     | HIGH        | All critical pitfalls verified against official MDN docs      |
+
+*Overall confidence:* HIGH
+
+Gaps to address:
+- *StoryGraph feature parity*: Site returned 403. Cross-referenced via
+  Hardcover import docs. Confidence MEDIUM on StoryGraph-specific features.
+- *AMO review time and requirements*: ~web-ext lint~ catches many issues but
+  AMO human review has undocumented acceptance criteria. Plan for 1--2 week
+  review iteration during Phase 6.
+- *Open Library rate limit enforcement in practice*: Documented at 1 req/sec
+  unauthenticated, 3 req/sec with =User-Agent=. Confirm via live testing in
+  Phase 2.
+
+* Sources
+
+** Primary (HIGH confidence)
+
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides][MDN: chrome_url_overrides]] (Jul 17, 2025)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version][MDN: manifest_version]] (Jul 17, 2025)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local][MDN: storage.local]] (Aug 1, 2025)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Anatomy_of_a_WebExtension][MDN: Anatomy of an extension]] (Jan 16, 2026)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Background_scripts][MDN: Background scripts]] (Jul 17, 2025)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_Security_Policy][MDN: Content Security Policy for extensions]] (Jan 2, 2026)
+- [[https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria][MDN: Storage quotas and eviction criteria]] (Jan 5, 2026)
+- [[https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/][Firefox Extension Workshop: MV3 Migration Guide]]
+- [[https://openlibrary.org/developers/api][Open Library API documentation]] (Feb 13, 2026)
+
+** Secondary (MEDIUM confidence)
+
+- [[https://www.goodreads.com/about/us][Goodreads]] -- feature discovery via navigation
+- [[https://literal.club/][Literal.club]] -- feature list direct observation
+- [[https://hardcover.app/][Hardcover]] -- feature list direct observation
+- [[https://addons.mozilla.org/en-US/firefox/search/?q=book+tracker][Firefox Add-ons AMO search]] -- confirmed no competing new-tab book tracker
+
+** Tertiary (LOW confidence)
+
+- StoryGraph -- 403 during research; features inferred from Hardcover import
+  compatibility; needs direct verification if competitive parity matters
+
+---
+/Research completed: [2026-02-25 Tue]/
+/Ready for roadmap: yes/

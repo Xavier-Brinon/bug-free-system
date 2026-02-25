@@ -1,0 +1,205 @@
+#+title: Stack Research: BookTab
+#+author: BookTab
+#+date: [2026-02-25 Tue]
+#+startup: indent
+#+options: toc:3 num:t ^:{}
+
+- *Domain* :: Firefox browser extension -- new tab page replacement, local-only
+  book tracker
+- *Researched* :: [2026-02-25 Tue]
+- *Confidence* :: HIGH (all core decisions verified against official Mozilla
+  docs and npm registry)
+
+* Recommended Stack
+
+** Core technologies
+
+#+CAPTION: Core technology stack
+| Technology                     | Version | Purpose                  | Why Recommended                                                     |
+|--------------------------------+---------+--------------------------+---------------------------------------------------------------------|
+| Manifest V3                    | 3       | Extension manifest format | GA in Firefox since v109; forward standard; Firefox MV3 keeps event pages not service workers |
+| TypeScript                     | 5.9.3   | Type-safe JavaScript     | ~@types/webextension-polyfill~ gives typed ~browser.*~ APIs        |
+| Vite                           | 7.3.1   | Build tool               | Multi-entry bundling, fast HMR, ESM output; handles extension pages naturally |
+| =vite-plugin-web-extension=    | 4.5.0   | Extension-aware Vite plugin | Reads =manifest.json= as build config; auto-discovers entrypoints; wraps =web-ext= |
+| =webextension-polyfill=        | 0.12.0  | Promise-based ~browser.*~ API | Cross-browser safety; use ~browser.*~ everywhere, never ~chrome.*~ |
+
+** Browser APIs (no external libraries)
+
+#+CAPTION: Browser APIs used
+| API                              | Purpose                   | Notes                                                      |
+|----------------------------------+---------------------------+------------------------------------------------------------|
+| ~browser.storage.local~          | Persist all book data     | IndexedDB-backed; survives privacy wipes; never use =window.localStorage= |
+| =chrome_url_overrides.newtab=    | Replace new tab page      | Confirmed MV2+MV3; HTML file must be bundled (no remote URLs) |
+| Fetch API                        | Book metadata lookups     | Requires =host_permissions= in manifest for external domains |
+
+** UI approach
+
+*Recommendation: Vanilla TypeScript + CSS (no UI framework)*
+
+The PROJECT.org constraint is "clean and minimal -- no heavy frameworks if
+avoidable." This is a single-page new tab -- no routing, no complex component
+tree, no server state. Vanilla TS with a hand-rolled view switcher is faster
+to load, simpler to debug in extension devtools, and produces smaller bundles.
+
+If reactivity becomes necessary:
+
+#+CAPTION: Lightweight reactivity options (only if needed)
+| Library          | Version | Purpose              | When to Use                              |
+|------------------+---------+----------------------+------------------------------------------|
+| Preact           | 10.x    | Minimal React-compat | If UI grows complex enough for components; ~3KB vs React 45KB |
+| =@preact/signals= | 1.x     | Fine-grained reactivity | If reactive state needed without full component model |
+
+*Verdict:* Start vanilla. Add Preact only if UI complexity justifies it.
+
+** Supporting libraries
+
+#+CAPTION: Supporting libraries
+| Library                      | Version | Purpose                   | When to Use                                      |
+|------------------------------+---------+---------------------------+--------------------------------------------------|
+| =@types/webextension-polyfill= | 0.12.5  | TypeScript types for ~browser.*~ | Always -- gives typed ~browser.storage.local~ |
+| =web-ext=                    | 9.3.0   | CLI: run, lint, build, sign | Dev workflow; install separately for ~web-ext lint~ |
+| =zod=                        | 3.x     | Runtime schema validation | Validate imported JSON at the import boundary    |
+| Vitest                       | latest  | Test framework           | TDD; native ESM; same config as Vite             |
+| XState                       | 5.x     | State machines / actors  | All stateful logic; async flows; UI transitions  |
+
+** Development tools
+
+#+CAPTION: Development tools
+| Tool               | Purpose                    | Notes                                                      |
+|--------------------+----------------------------+------------------------------------------------------------|
+| =web-ext= CLI      | Live reload, lint, package | ~web-ext run~ auto-reloads; ~web-ext lint~ catches manifest errors |
+| Firefox DevTools   | Debug extension pages      | =about:debugging= → This Firefox → Inspect extension pages |
+| =addons-linter=    | Validate before submission | Bundled inside ~web-ext lint~; catches policy violations   |
+| TypeScript strict  | Catch bugs early           | Set ="strict": true= in =tsconfig.json=                    |
+
+* Installation
+
+#+name: install-commands
+#+begin_src bash
+# Core project setup
+npm create vite@latest booktab -- --template vanilla-ts
+
+# Install Vite extension plugin and browser API polyfill
+npm install webextension-polyfill
+npm install -D vite-plugin-web-extension
+
+# TypeScript types for browser APIs
+npm install -D @types/webextension-polyfill
+
+# Runtime validation (for JSON import)
+npm install zod
+
+# State machines
+npm install xstate
+
+# Test framework
+npm install -D vitest
+
+# Dev/build/lint/sign CLI
+npm install -D web-ext
+
+# TypeScript (usually included by Vite template, verify version)
+npm install -D typescript@^5.9.0
+#+end_src
+
+* Manifest V3 template
+
+#+name: manifest-template
+#+begin_src json
+{
+  "manifest_version": 3,
+  "name": "BookTab",
+  "version": "1.0.0",
+  "chrome_url_overrides": {
+    "newtab": "src/newtab/index.html"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://openlibrary.org/*",
+    "https://covers.openlibrary.org/*"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "booktab@yourdomain.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}
+#+end_src
+
+Notes:
+- =browser_specific_settings.gecko.id= is required for ~web-ext sign~ and
+  persistent storage in development profiles
+- =strict_min_version: "109.0"= = when Firefox MV3 became GA (Feb 2023)
+- No =background= needed -- all logic runs in the new tab page itself
+
+* Alternatives considered
+
+#+CAPTION: Alternatives considered and rejected
+| Recommended                    | Alternative                  | When to Use Alternative                          |
+|--------------------------------+------------------------------+--------------------------------------------------|
+| MV3                            | MV2                          | Only if supporting Firefox < 109 (rare, outdated) |
+| Vanilla TS                     | React                        | Only if UI complexity requires a component ecosystem |
+| Vanilla TS                     | Vue 3                        | Same -- overkill for a single-page extension     |
+| =vite-plugin-web-extension=    | Webpack + web-ext-webpack    | If team is Webpack-only; Vite is faster          |
+| ~browser.storage.local~        | IndexedDB directly           | Only if storage.local API capabilities exceeded  |
+| =zod=                          | =ajv=                        | If JSON Schema validation needed over TypeScript-first |
+
+* What NOT to use
+
+#+CAPTION: Technologies to avoid
+| Avoid                   | Why                                                              | Use Instead              |
+|-------------------------+------------------------------------------------------------------+--------------------------|
+| =window.localStorage=   | Firefox clears it on privacy wipes even in extension contexts   | ~browser.storage.local~  |
+| ~chrome.*~ namespace    | Callbacks-based; inconsistent with Firefox's Promise-based API  | ~browser.*~ via polyfill |
+| React                   | 45KB+ runtime; heavy for a page that loads on every new tab     | Vanilla TS or Preact     |
+| Remote scripts / CDN    | Blocked by MV3 CSP; AMO flags them                              | Bundle everything via Vite |
+| =eval()= / dynamic code | Banned in MV3 CSP; =addons-linter= rejects the extension        | Static imports only      |
+| Service workers         | Chrome MV3 approach; Firefox MV3 uses event pages               | Event page or no background |
+
+* Firefox-specific nuances
+
+1. *MV3 vs Chrome MV3 are different.* Firefox MV3 keeps event pages (not
+   service workers), keeps ~browser.*~ promises natively, and has more relaxed
+   CSP than Chrome. Do not follow Chrome extension tutorials verbatim.
+
+2. *~browser.*~ is native in Firefox.* The polyfill adds cross-browser safety
+   but Firefox already exposes the full Promise-based API.
+
+3. *Extension ID matters.* Without =browser_specific_settings.gecko.id=,
+   Firefox assigns a random ID each reinstall -- this resets storage in
+   development.
+
+4. *New tab override requires user confirmation.* When installed from AMO,
+   Firefox may prompt the user to confirm the new tab override. Expected
+   behavior -- not a bug.
+
+5. *=storage.local= is IndexedDB-backed.* Data survives browser restarts and
+   privacy wipes (unlike =window.localStorage= in extension contexts).
+
+* Version compatibility
+
+#+CAPTION: Package version compatibility matrix
+| Package                        | Version | Compatible With  | Notes                              |
+|--------------------------------+---------+------------------+------------------------------------|
+| =vite-plugin-web-extension=    | 4.5.0   | =vite@^4\|^5\|^6\|^7= | Supports Vite 4--7               |
+| =webextension-polyfill=        | 0.12.0  | Firefox 109+     | Current as of Feb 2026             |
+| =@types/webextension-polyfill= | 0.12.5  | TypeScript 5.2+  | DefinitelyTyped, maintained        |
+| =web-ext=                      | 9.3.0   | Node ≥18         | Current LTS (Node 20/22)           |
+| =vite=                         | 7.3.1   | Node ≥20.19      | Vite 7 requires newer Node         |
+| =typescript=                   | 5.9.3   | Node ≥14.17      | Latest stable                      |
+
+* Sources
+
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides][MDN: chrome_url_overrides]] (Jul 17, 2025) -- MV2+MV3 support confirmed
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version][MDN: manifest_version]] (Jul 17, 2025) -- MV3 current standard
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local][MDN: storage.local]] (Aug 1, 2025) -- IndexedDB-backed; localStorage warning
+- [[https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/][Firefox Extension Workshop: MV3 Migration Guide]] -- MV3 GA in Firefox 109
+- npm registry (Feb 2026) -- all package versions verified current
+
+---
+/Stack research for: Firefox new tab extension book tracker (BookTab)/
+/Researched: [2026-02-25 Tue]/

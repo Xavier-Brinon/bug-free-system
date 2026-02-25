@@ -1,0 +1,208 @@
+#+title: Feature Research: BookTab
+#+author: BookTab
+#+date: [2026-02-25 Tue]
+#+startup: indent
+#+options: toc:3 num:t ^:{}
+
+- *Domain* :: Personal book tracker -- Firefox new tab browser extension
+- *Researched* :: [2026-02-25 Tue]
+- *Confidence* :: MEDIUM-HIGH (direct observation of Goodreads, Hardcover,
+  Literal.club, Oku; StoryGraph returned 403)
+
+* Context: new tab constraint
+
+This is *not a web app*. It is a new tab page replacement. Every design
+decision must be filtered through this lens:
+
+- *Screen real estate is shared* -- the new tab is seen for ~2 seconds before
+  navigating away; it must communicate value instantly
+- *No navigation chrome* -- cannot rely on sidebars, multi-page flows, complex
+  menus
+- *Interactions must be fast* -- the user is /on their way somewhere else/;
+  heavy modals and multi-step forms hurt
+- *The value is ambient* -- seeing your current read is the primary
+  interaction, not actively managing a library
+- *Local storage limits apply* -- ~browser.storage.local~ has a 10MB quota by
+  default; cover images must be URLs, not base64
+
+* Feature landscape
+
+** Table stakes (users expect these)
+
+Features that must exist or the tool feels broken. Standard across all book
+trackers.
+
+#+CAPTION: Table stakes features
+| Feature                          | Why Expected                              | Complexity | Notes                                  |
+|----------------------------------+-------------------------------------------+------------+----------------------------------------|
+| Book status (Want/Reading/Read)  | Core primitive of all book trackers       | LOW        | All major apps use this exact model    |
+| Add book via search              | Users expect title → results, not ISBNs  | MEDIUM     | Open Library: free, no API key         |
+| Manual book entry fallback       | Search won't find obscure/ARC/foreign     | LOW        | Simple form: title, author, cover URL  |
+| Display current read prominently | BookTab's entire value prop               | LOW        | The hero element; dominant visual      |
+| Reading queue / to-read list     | Users expect a manageable backlog         | LOW        | Simple ordered list for v1             |
+| Notes while reading              | Standard in Goodreads, StoryGraph, Literal | MEDIUM    | Per-book plain textarea is fine        |
+| Rating after finishing           | 5-star on completed books                 | LOW        | Optional field on mark-as-read         |
+| Review / reflection              | Post-finish reflection, distinct from notes | LOW      | Two distinct fields per book           |
+| View finished books history      | Users need to see what they've read       | LOW        | Sort by date finished                  |
+| Data export (JSON)               | Users expect to own their data            | LOW        | Full library as downloadable file      |
+| Data import (JSON)               | Backup/restore; required for safety       | LOW        | Parse, validate, merge or replace      |
+
+** Differentiators (competitive advantage)
+
+Features not standard across all competitors, or that take new meaning in
+the new-tab context.
+
+#+CAPTION: Differentiating features
+| Feature                            | Value Proposition                                  | Complexity | Notes                                    |
+|------------------------------------+----------------------------------------------------+------------+------------------------------------------|
+| Current book as new tab hero       | No competitor does this -- unique ambient pattern  | LOW        | Differentiator is the /context/, not the feature |
+| Tags on to-read books              | Custom free-form tags; most personal trackers lack | LOW        | e.g. "gift", "non-fiction", "need-to-buy" |
+| Priority ordering of to-read queue | Goodreads unordered; no major app has queue priority | MEDIUM   | Drag-to-reorder or up/down arrows        |
+| "Why I want to read this" notes    | No major app has a dedicated intention field       | LOW        | Single text field; surfaces motivation   |
+| Clean, minimal new tab aesthetic   | Major apps are dense discovery UIs                 | LOW        | Architectural commitment, not a feature  |
+| No account required                | Every major competitor requires signup             | LOW        | Baked in by architecture                 |
+
+** Anti-features (do not build)
+
+#+CAPTION: Anti-features to deliberately avoid
+| Feature                    | Why Requested                          | Why Problematic                                   | Alternative                      |
+|----------------------------+----------------------------------------+---------------------------------------------------+----------------------------------|
+| Page/% progress tracking   | Granular progress ("page 234 of 412")  | Encourages interaction every tab-open; out of scope | Status-only: Reading means in it |
+| Reading stats / analytics  | Books/year, genres, avg rating         | Dashboard complexity; stats need dedicated sessions | Basic history count              |
+| Social features            | Goodreads muscle memory                | Requires auth, backend, network effects             | JSON export for sharing          |
+| Book recommendations       | Goodreads/Hardcover have them          | Requires ML, external data; shifts product type     | Tags + queue for user curation   |
+| Cloud sync / cross-device  | Library on phone + desktop             | Backend, auth, conflict resolution; out of scope    | JSON export/import               |
+| Reading challenges / goals | Goodreads annual challenge is popular  | Motivational mechanics compete with calm ambient UI | History count serves this passively |
+| ISBN barcode scanner       | Literal.club, Hardcover have this      | Camera API not available in new tab context         | Manual entry + search            |
+| Rich text notes            | Notion/Bear users expect formatting    | TipTap/Quill adds bundle size; overkill here        | Plain textarea; Markdown later   |
+| Multiple current books     | Power readers juggle 3--5 books        | Dilutes focus of the UI hero                        | One primary book; others paused  |
+| Browser popup / toolbar    | "Quick add" without opening new tab    | Second UI surface to maintain; out of scope         | New tab is the expected pattern  |
+
+* Feature dependencies
+
+#+BEGIN_EXAMPLE
+[Book Storage Schema]
+    └──requires──> [Add Book (Search or Manual)]
+    └──requires──> [Status Management (Want/Reading/Read)]
+
+[Current Book Display (New Tab Hero)]
+    └──requires──> [Status: "Reading" state]
+    └──enhances──> ["Why I want to read" notes on queue books]
+
+[Reading Notes]
+    └──requires──> [Book Storage Schema]
+    └──requires──> [Status: "Reading" state]
+
+[Review / Rating]
+    └──requires──> [Status: "Read" state]
+    └──enhances──> [Finished Books History]
+
+[Finished Books History / Timeline]
+    └──requires──> [Status: "Read" + date_finished stored]
+
+[JSON Export]
+    └──requires──> [Book Storage Schema -- finalized]
+
+[JSON Import]
+    └──requires──> [JSON Export schema -- stable]
+    └──conflicts──> [Storage schema changes] (migrations needed)
+#+END_EXAMPLE
+
+Dependency notes:
+- *Book Storage Schema must be designed first* -- every feature depends on it;
+  lock it in Phase 1
+- *Export schema must stabilize before v1* -- once users export and backup
+  data, breaking schema changes require migration tooling
+- *Status: "Read" requires a =date_finished= field* stored automatically when
+  status changes -- history timeline depends on this
+
+* MVP definition
+
+** Launch with (v1)
+
+Minimum viable product -- validates the core loop: see current book → manage
+queue → take notes → finish → see history.
+
+- [ ] New tab override -- Firefox new tab shows BookTab UI
+- [ ] Manual book entry with optional cover URL
+- [ ] Status tracking: Want to Read / Reading / Read
+- [ ] Current book displayed as hero on new tab -- cover, title, author
+- [ ] To-read queue -- list of Want to Read books
+- [ ] JSON export -- full data dump as downloadable file
+- [ ] JSON import -- restore from JSON backup
+
+** Add after validation (v1.x)
+
+- [ ] Book search via Open Library API with auto-fill
+- [ ] Reading notes -- per-book notes field during Reading status
+- [ ] Review + star rating -- per-book, unlocked when marked Read
+- [ ] Finished books history -- chronological list with finish date
+- [ ] Tags on books -- free-form tags with filtering
+- [ ] "Why I want to read this" field -- intention capture on queue add
+- [ ] Queue manual reorder -- drag or up/down priority
+
+** Future consideration (v2+)
+
+- Cover image caching -- storage budget management required
+- Multiple reading statuses (Paused, DNF) -- wait for real user demand
+- Markdown rendering in notes -- low-cost later, defer to avoid v1 scope creep
+- "Next up" display on new tab -- complicates hero layout
+
+* Feature prioritization matrix
+
+#+CAPTION: Feature prioritization
+| Feature                           | User Value     | Cost   | Priority |
+|-----------------------------------+----------------+--------+----------|
+| New tab override + current book   | HIGH           | LOW    | P1       |
+| Status tracking (3 states)        | HIGH           | LOW    | P1       |
+| Manual book entry                 | HIGH           | LOW    | P1       |
+| To-read queue                     | HIGH           | LOW    | P1       |
+| JSON export                       | HIGH           | LOW    | P1       |
+| JSON import                       | HIGH           | LOW    | P1       |
+| Book search (Open Library)        | HIGH           | MEDIUM | P2       |
+| Reading notes                     | HIGH           | LOW    | P2       |
+| Review + rating                   | MEDIUM         | LOW    | P2       |
+| Finished books history            | MEDIUM         | LOW    | P2       |
+| Tags on books                     | MEDIUM         | LOW    | P2       |
+| "Why I want to read" notes        | MEDIUM         | LOW    | P2       |
+| Queue manual reorder              | MEDIUM         | MEDIUM | P2       |
+| Markdown in notes                 | LOW            | LOW    | P3       |
+| Cover image caching               | LOW            | MEDIUM | P3       |
+| "Next up" on new tab              | LOW            | MEDIUM | P3       |
+| Multiple statuses (DNF, Paused)   | LOW            | LOW    | P3       |
+
+* Competitor feature analysis
+
+#+CAPTION: Competitor feature comparison
+| Feature                  | Goodreads | StoryGraph | Literal | Hardcover | BookTab         |
+|--------------------------+-----------+------------+---------+-----------+-----------------|
+| Status (Want/Read/Read)  | ✓         | ✓          | ✓       | ✓         | ✓ Same model    |
+| Rating                   | ✓ 5-star  | ✓ half     | ✓       | ✓ half    | ✓ 5-star        |
+| Reviews/notes            | ✓ public  | ✓ private+ | ✓       | ✓ both    | ✓ private only  |
+| Progress tracking        | ✓ pages/% | ✓ pages/%  | ✓       | ✓         | ✗ status-only   |
+| Tags/shelves             | ✓ shelves | ✓ mood     | ✓       | ✓         | ✓ free-form     |
+| Discovery/recommendations | ✓ social | ✓ algo     | ✓ social | ✓ algo   | ✗ out of scope  |
+| Social/friends           | ✓ core    | ✓ follow   | ✓ clubs | ✓ follow  | ✗ out of scope  |
+| Data export              | ✓ CSV     | ✓ CSV      | ✗       | ✓ CSV     | ✓ JSON          |
+| Reading stats            | ✓ basic   | ✓ detailed | ✓       | ✓         | ✗ history only  |
+| No account required      | ✗         | ✗          | ✗       | ✗         | ✓ local-only    |
+| New tab integration      | ✗         | ✗          | ✗       | ✗         | ✓ the product   |
+| Works offline            | ✗         | ✗          | ✗       | ✗         | ✓ local storage |
+
+*Competitive whitespace:* The combination of (1) no account required,
+(2) new tab ambient visibility, and (3) offline-first local storage is
+completely unoccupied. All major competitors are social discovery platforms.
+
+* Sources
+
+- [[https://www.goodreads.com/about/us][Goodreads]] -- feature discovery via navigation
+- [[https://literal.club/][Literal.club]] -- feature list: shelves, progress, highlights, barcode, clubs
+- [[https://hardcover.app/][Hardcover]] -- feature list: status, progress, ratings, lists, import
+- [[https://addons.mozilla.org/en-US/firefox/search/?q=book+tracker][Firefox Add-ons search]] -- no book-tracker new tab extensions found
+- [[https://openlibrary.org/about][Open Library]] -- free, no API key, 20M+ records
+- StoryGraph (403 on direct access) -- features inferred via Hardcover import
+  docs and community cross-references -- MEDIUM confidence
+
+---
+/Feature research for: BookTab -- Firefox new tab book tracker extension/
+/Researched: [2026-02-25 Tue]/

@@ -1,0 +1,430 @@
+#+title: Pitfalls Research: BookTab
+#+author: BookTab
+#+date: [2026-02-25 Tue]
+#+startup: indent
+#+options: toc:3 num:t ^:{}
+
+- *Domain* :: Firefox browser extension / new tab book tracker
+- *Researched* :: [2026-02-25 Tue]
+- *Confidence* :: HIGH (all critical pitfalls verified against official MDN
+  documentation and Open Library API docs)
+
+* Critical pitfalls
+
+** Pitfall 1: Inline JavaScript and eval() silently blocked by CSP
+:PROPERTIES:
+:CUSTOM_ID: pitfall-csp
+:END:
+
+*** What goes wrong
+
+The extension UI renders blank or partially broken with no visible error.
+Event handlers like =onclick="doThing()"= in HTML do nothing. CDN-loaded
+scripts like =<script src="https://cdn.jsdelivr.net/...">= are silently
+dropped.
+
+*** Why it happens
+
+Firefox extensions have a strict default Content Security Policy applied to
+all extension pages:
+- *MV2 default:* ~"script-src 'self'; object-src 'self';"~
+- *MV3 default:* ~"script-src 'self'; upgrade-insecure-requests;"~
+
+This means: no inline =<script>= blocks, no inline event handlers, no
+=eval()=, =setTimeout("string")=, or =new Function(...)=, and no remote CDN
+scripts. All of these fail *silently* in many cases.
+
+*** How to avoid
+
+- All JavaScript must be in =.js= / =.ts= files bundled with the extension
+- All event handlers must be attached via ~addEventListener()~ in JS
+- No CDN scripts -- bundle everything via Vite
+- Never use =eval()=, =setTimeout= with string argument, or =new Function()=
+- Test immediately after scaffolding: open =about:debugging= and verify zero
+  CSP violations
+
+*** Warning signs
+
+- [ ] Clicking buttons does nothing with no console error on the page
+- [ ] Scripts work in a regular HTML page but not in the extension
+- [ ] CDN script appears to succeed in editor but search does nothing
+
+*** Phase to address
+
+Phase 1 (scaffolding/foundation). Must be established before any feature code.
+
+** Pitfall 2: Using window.localStorage instead of browser.storage.local
+:PROPERTIES:
+:CUSTOM_ID: pitfall-localstorage
+:END:
+
+*** What goes wrong
+
+Data stored with =localStorage= gets silently wiped when the user clears
+browser history, cookies, or site data -- even though the extension is not a
+"site." The user loses their entire book library.
+
+*** Why it happens
+
+=localStorage= is familiar and synchronous. MDN explicitly warns: "Firefox
+clears data stored by extensions using the localStorage API in various
+scenarios where users clear their browsing history and data for privacy
+reasons."
+
+*** How to avoid
+
+Use ~browser.storage.local~ exclusively. It:
+- Persists correctly through history/cookie clears
+- Requires the ="storage"= permission in =manifest.json=
+- Is async (returns Promises) -- plan for this in all data access code
+
+*** Warning signs
+
+- [ ] =localStorage.setItem()= anywhere in extension code
+- [ ] Missing ="storage"= in manifest permissions
+- [ ] Storage calls that appear synchronous
+
+*** Phase to address
+
+Phase 1 (data layer). Must be the first storage decision made.
+
+** Pitfall 3: Storing large text without monitoring storage quota
+:PROPERTIES:
+:CUSTOM_ID: pitfall-quota
+:END:
+
+*** What goes wrong
+
+~browser.storage.local.set()~ calls that exceed quota throw a
+=QuotaExceededError=. If uncaught, this silently drops the save and the user
+loses their notes.
+
+*** Why it happens
+
+Developers test with small data sets. A power user with 500 books and
+multi-page reviews hits issues only after months of use.
+
+*** How to avoid
+
+- Wrap all ~browser.storage.local.set()~ calls in try/catch and surface
+  errors to the user
+- Store cover images as URLs, never as base64 blobs
+- Use ~browser.storage.local.getBytesInUse()~ to monitor quota in development
+- Consider =unlimitedStorage= permission for heavy note usage (may require
+  AMO justification)
+
+*** Warning signs
+
+- [ ] No error handling on =storage.local.set()= calls
+- [ ] =getBytesInUse()= never called during testing
+- [ ] Cover images stored as base64
+
+*** Phase to address
+
+Phase 1 (data schema design). Structural decisions here are hard to change.
+
+** Pitfall 4: CORS -- not a problem for extensions (but easily misunderstood)
+:PROPERTIES:
+:CUSTOM_ID: pitfall-cors
+:END:
+
+*** What goes wrong
+
+Developers assume external API calls from extensions require complex
+workarounds, implement convoluted background-script message-passing, or give
+up and bundle no search at all.
+
+*** Why it happens
+
+CORS restrictions apply to regular web pages. In a Firefox extension,
+declaring a host permission in the manifest grants cross-origin ~fetch()~
+access -- CORS is bypassed for extension pages.
+
+#+begin_src json
+// MV3: host_permissions
+{ "host_permissions": ["*://openlibrary.org/*"] }
+#+end_src
+
+Once declared, ~fetch("https://openlibrary.org/search.json?q=...")~ from the
+new tab page works without CORS issues.
+
+The real problem is forgetting to declare the host permission.
+
+*** How to avoid
+
+Declare all required API origins in =host_permissions= from day one:
+- For Open Library: =*://openlibrary.org/*= *and* =*://covers.openlibrary.org/*=
+  (cover images are a separate domain)
+
+*** Warning signs
+
+- [ ] CORS errors in extension page console
+- [ ] Missing =host_permissions= for external APIs
+- [ ] API calls routed through background script for no architectural reason
+
+*** Phase to address
+
+Phase 2 (book search feature). Must be in manifest before writing search code.
+
+** Pitfall 5: Google Books API key exposed in extension source
+:PROPERTIES:
+:CUSTOM_ID: pitfall-apikey
+:END:
+
+*** What goes wrong
+
+Browser extensions are distributed as ZIP files that users can unzip. Any
+API key in the source is publicly visible. A scraped key gets abused, exceeds
+quota limits, or gets revoked.
+
+*** Why it happens
+
+Web developers are accustomed to keeping API keys in =.env= files. Extensions
+have no server-side to hide keys behind.
+
+*** How to avoid
+
+Use *Open Library instead* -- it is free, requires no API key, and aligns
+with the offline-first/no-backend philosophy.
+
+*** Phase to address
+
+Phase 2 (book search). This is why Open Library was chosen over Google Books.
+
+** Pitfall 6: Flat storage schema that makes import/export fragile
+:PROPERTIES:
+:CUSTOM_ID: pitfall-schema
+:END:
+
+*** What goes wrong
+
+When the schema evolves (new fields like =queueNote=, =tags=, =finishedAt=),
+imported data from older exports breaks because required fields are missing.
+Users who use export/import (the primary backup mechanism) lose notes.
+
+*** Why it happens
+
+Developers design schema for current features without versioning. Import code
+assumes the latest schema.
+
+*** How to avoid
+
+- Embed =schemaVersion: 1= in the root of every export file from day one
+- Write an import migration layer: ~migrate(data, fromVersion, toVersion)~
+- Use sensible defaults when fields are missing -- never crash on missing
+  optional fields
+
+#+name: versioned-schema-example
+#+begin_src json
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-02-25T12:00:00Z",
+  "books": [
+    {
+      "id": "uuid",
+      "title": "...",
+      "status": "reading",
+      "tags": [],
+      "queueNote": "",
+      "readingNotes": "",
+      "review": "",
+      "addedAt": "2026-02-25T12:00:00Z",
+      "finishedAt": null
+    }
+  ]
+}
+#+end_src
+
+*** Warning signs
+
+- [ ] No =schemaVersion= field in export format
+- [ ] Import code that crashes on =undefined= field access
+- [ ] No tests for importing old export files
+
+*** Phase to address
+
+Phase 1 (data layer) and Phase 6 (import/export).
+
+** Pitfall 7: chrome_url_overrides conflict with other extensions
+:PROPERTIES:
+:CUSTOM_ID: pitfall-conflict
+:END:
+
+*** What goes wrong
+
+If the user has another extension that also overrides the new tab page, only
+one wins -- the last installed. BookTab silently "disappears" as the new tab
+for some users, with no error message.
+
+*** Why it happens
+
+Firefox documentation states: "If two or more extensions both define custom
+new tab pages, then the last one to be installed or enabled gets to use its
+value."
+
+*** How to avoid
+
+This cannot be prevented programmatically -- it is browser policy.
+- In onboarding: inform the user that BookTab requires being the only
+  new-tab-overriding extension
+- Use an install welcome page to surface this guidance immediately after
+  install
+- Do not try to detect or fight other extensions -- against AMO policies
+
+*** Phase to address
+
+Phase 1 (extension scaffolding). Document in the install welcome page.
+
+** Pitfall 8: browser.storage.local is async -- race conditions on new tab open
+:PROPERTIES:
+:CUSTOM_ID: pitfall-async
+:END:
+
+*** What goes wrong
+
+The new tab page loads and immediately reads from ~browser.storage.local~. If
+the read has not resolved yet, the UI renders with no book, then "flickers."
+Worse: if the user takes an action before data loads, the action runs with
+stale/empty state and potentially overwrites real data.
+
+*** Why it happens
+
+~browser.storage.local.get()~ returns a Promise. Developers who do not await
+it or handle the async gap correctly render the empty initial state.
+
+*** How to avoid
+
+- Show a loading state until the first storage read resolves
+- Never write to storage until the initial read has completed
+- Structure the app with a single "data loaded" gate before rendering
+  interactive elements (this is a natural fit for XState -- =loading= →
+  =ready= machine states)
+
+*** Warning signs
+
+- [ ] ~browser.storage.local.get()~ called without =.then()= or =await=
+- [ ] Interactive elements rendered before =storageReady=
+- [ ] Flickering or empty current-book display on new tab open
+
+*** Phase to address
+
+Phase 1 (data layer architecture).
+
+** Pitfall 9: Open Library rate limits and missing cover domain permission
+:PROPERTIES:
+:CUSTOM_ID: pitfall-openlibrary
+:END:
+
+*** What goes wrong
+
+Book searches work in testing but fail intermittently due to rate limiting.
+Cover images fail silently because the covers domain requires a separate host
+permission.
+
+*** Why it happens
+
+Open Library's default rate limit is 1 request/second for unauthenticated
+requests. A user typing quickly triggers multiple rapid searches. Open Library
+cover images come from =covers.openlibrary.org= -- a different domain from
+=openlibrary.org=.
+
+*** How to avoid
+
+- Implement debounced search: wait 400--600ms after the user stops typing
+- Set the =User-Agent= header: ~User-Agent: BookTab (contact@example.org)~
+  to get 3x rate limit (3 req/sec)
+- Cache search results in memory within the session
+- Add *both* =*://openlibrary.org/*= *and* =*://covers.openlibrary.org/*=
+  to =host_permissions=
+
+*** Warning signs
+
+- [ ] No debounce on search input -- fires on every keystroke
+- [ ] No =User-Agent= header set on fetch calls
+- [ ] Cover images fail for books that show correct metadata
+- [ ] Only =openlibrary.org= in =host_permissions= (missing covers domain)
+
+*** Phase to address
+
+Phase 2 (book search feature).
+
+** Pitfall 10: Import overwrites all data without merge or backup
+:PROPERTIES:
+:CUSTOM_ID: pitfall-import
+:END:
+
+*** What goes wrong
+
+User imports a JSON file. The import silently replaces all existing data with
+the imported data. If the user imported an old backup by mistake, they
+permanently lose their current library. There is no undo.
+
+*** Why it happens
+
+Import is often implemented as: parse JSON, call =storage.local.set()=, done.
+Simple to write, catastrophic if the user imports the wrong file.
+
+*** How to avoid
+
+- Before any import, auto-export the current data to a timestamped file, or
+  warn the user explicitly
+- Offer "merge" as an alternative to "replace"
+- Validate the import file strictly: check =schemaVersion=, validate required
+  fields, reject malformed JSON before touching storage
+- Show a preview ("47 books found in this file") before confirming
+
+*** Warning signs
+
+- [ ] Import calls =storage.local.set()= immediately without validation
+- [ ] No confirmation dialog before destructive import
+- [ ] No export offered as part of the import flow
+
+*** Phase to address
+
+Phase 6 (data safety).
+
+* Technical debt patterns
+
+#+CAPTION: Shortcuts and their long-term costs
+| Shortcut                          | Benefit        | Long-term Cost                          | Acceptable?      |
+|-----------------------------------+----------------+-----------------------------------------+------------------|
+| Single ="books"= key (giant array) | Simple reads   | Full re-serialization on every change   | MVP only <100 books |
+| Inline event handlers             | Familiar syntax | Blocked by CSP -- silent failure        | Never            |
+| No schema versioning in export    | Simpler export | Import breaks on first schema change    | Never            |
+| =localStorage= instead of storage.local | Sync API | Data wiped on browser data clear        | Never            |
+| Google Books API key in source    | Richer metadata | Key exposed, subject to abuse          | Never            |
+| No debounce on book search        | Instant search | Rate limit exceeded                     | Never            |
+| No error handling on =storage.set= | Simpler code  | Silent data loss on quota exceeded      | Never            |
+| Hardcoded cover image URLs        | Faster to build | URLs change; use Covers API endpoint   | Never            |
+
+* Pitfall-to-phase mapping
+
+#+CAPTION: Which phase addresses each pitfall
+| Pitfall                         | Prevention Phase         | Verification                                   |
+|---------------------------------+--------------------------+------------------------------------------------|
+| CSP violations / inline JS      | Phase 1 (Scaffolding)    | Zero CSP errors in =about:debugging= console  |
+| =localStorage= vs storage.local | Phase 1 (Data Layer)     | Grep for =localStorage= -- must return zero    |
+| Async storage race conditions   | Phase 1 (Data Layer)     | UI never renders empty when books exist        |
+| Storage quota + error handling  | Phase 1 (Data Schema)    | =getBytesInUse()= in tests; =set()= errors caught |
+| Flat schema / no versioning     | Phase 1 (Data Schema)    | Export contains =schemaVersion: 1=            |
+| API key / Open Library choice   | Phase 2 (Book Search)    | No API keys in source; Open Library works     |
+| Open Library host permissions   | Phase 2 (Book Search)    | Cover images load; no CORS errors              |
+| API rate limit + debounce       | Phase 2 (Book Search)    | Search fires after 400ms; =User-Agent= set    |
+| Import without validation       | Phase 6 (Data Safety)    | Rejects malformed JSON; warns before replacing |
+| Import/export round-trip        | Phase 6 (Data Safety)    | Export from v1, import to fresh profile, all data matches |
+| New tab conflict (other exts)   | Phase 1 + Onboarding     | Install welcome page mentions conflict scenario |
+| Destructive import UX           | Phase 6 (Data Safety)    | Confirmation dialog shown; auto-backup created |
+
+* Sources
+
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local][MDN: storage.local]]
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_Security_Policy][MDN: Content Security Policy for extensions]] (Jan 2, 2026)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides][MDN: chrome_url_overrides]] (Jul 17, 2025)
+- [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions][MDN: permissions (unlimitedStorage)]] (Jan 27, 2026)
+- [[https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria][MDN: Storage quotas and eviction criteria]] (Jan 5, 2026)
+- [[https://openlibrary.org/developers/api][Open Library API documentation]] (Feb 13, 2026)
+- [[https://extensionworkshop.com/documentation/develop/build-a-secure-extension/][Extension Workshop: Build a secure extension]]
+
+---
+/Pitfalls research for: Firefox extension / new tab book tracker (BookTab)/
+/Researched: [2026-02-25 Tue]/
