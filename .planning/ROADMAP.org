@@ -65,7 +65,12 @@ ADR-01, ADR-02, ADR-03, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06
 
 *** Plans
 
-TBD
+3 plans across 2 waves.
+
+Plans:
+- [ ] 01-01-PLAN.md — ADR infrastructure (docs/decisions/ + MADR template) + CONTRIBUTING.org
+- [ ] 01-02-PLAN.md — Vitest configuration (package.json + vitest.config.ts + tsconfig.json)
+- [ ] 01-03-PLAN.md — ADR-0001 (Vitest) + ADR-0002 (TDD methodology)
 
 ** Phase 2: Extension Scaffold
 :PROPERTIES:
@@ -252,7 +257,7 @@ TBD
 #+NAME: tab:progress
 | Phase | Name                        | Plans Complete | Status      | Completed |
 |-------+-----------------------------+----------------+-------------+-----------|
-|     1 | Tooling & Practice          | 0/?            | Not started | --        |
+|     1 | Tooling & Practice          | 0/3            | Not started | --        |
 |     2 | Extension Scaffold          | 0/?            | Not started | --        |
 |     3 | Library CRUD                | 0/?            | Not started | --        |
 |     4 | New Tab Display             | 0/?            | Not started | --        |
