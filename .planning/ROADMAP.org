@@ -27,6 +27,25 @@
 - [ ] *Phase 6: Data Safety* -- User can export and safely import their
   library; no data can be destroyed without a backup
 
+#+begin_src mermaid :file ./images/roadmap-phase-deps.svg :theme neutral
+graph LR
+    P1["Phase 1\nTooling &\nPractice"]
+    P2["Phase 2\nExtension\nScaffold"]
+    P3["Phase 3\nLibrary\nCRUD"]
+    P4["Phase 4\nNew Tab\nDisplay"]
+    P5["Phase 5\nQueue"]
+    P6["Phase 6\nData Safety"]
+
+    P1 --> P2
+    P2 --> P3
+    P3 --> P4
+    P3 --> P5
+    P4 --> P6
+    P5 --> P6
+#+end_src
+#+RESULTS:
+[[file:./images/roadmap-phase-deps.svg]]
+
 * Phase Details
 
 ** Phase 1: Tooling & Practice Foundation

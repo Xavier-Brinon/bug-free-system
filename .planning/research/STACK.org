@@ -12,6 +12,33 @@
 
 * Recommended Stack
 
+#+begin_src mermaid :file ./images/stack-toolchain-layers.svg :theme neutral
+graph LR
+    subgraph BuildTime["Build-time (devDependencies)"]
+        TS["TypeScript 5.9.3\n(type checking)"]
+        VITE["Vite 7.3.1\n(bundler)"]
+        PLUGIN["vite-plugin-web-extension 4.5.0\n(extension-aware build)"]
+        VITEST["Vitest\n(test runner)"]
+        WEBEXT["web-ext 9.3.0\n(lint / package / sign)"]
+        TYPES["@types/webextension-polyfill\n(browser.* types)"]
+        TS --> VITE
+        PLUGIN --> VITE
+        TYPES --> TS
+    end
+
+    subgraph Runtime["Runtime (dependencies)"]
+        POLYFILL["webextension-polyfill 0.12.0\n(Promise-based browser.*)"]
+        XSTATE["XState v5\n(state machines)"]
+        ZOD["zod 3.x\n(schema validation)"]
+    end
+
+    VITE -- bundles --> Runtime
+    VITEST -- tests --> Runtime
+    WEBEXT -- lints/packages --> VITE
+#+end_src
+#+RESULTS:
+[[file:./images/stack-toolchain-layers.svg]]
+
 ** Core technologies
 
 #+CAPTION: Core technology stack

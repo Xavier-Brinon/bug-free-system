@@ -103,6 +103,30 @@ access to ~browser.storage.local~ -- no background script, no message
 passing, no content scripts. All data lives under one storage key
 (=booktab_data=) as a versioned JSON object.
 
+#+begin_src mermaid :file ./images/summary-arch-overview.svg :theme neutral
+graph TD
+    M["manifest.json"]
+    H["newtab/newtab.html\n(privileged extension page)"]
+    APP["app.ts\n(XState root actor)"]
+    STORE["storage.ts\n(browser.storage.local wrapper)"]
+    SCHEMA["schema.ts\n(data shape + migration)"]
+    API["api.ts\n(Open Library fetch)"]
+    UI["ui/ modules\ncurrentBook · queue · notes\nbookForm · importExport"]
+    SL[("browser.storage.local\n(IndexedDB-backed)")]
+    OL["Open Library API"]
+
+    M --> H
+    H --> APP
+    APP --> UI
+    APP --> STORE
+    APP --> API
+    STORE --> SCHEMA
+    STORE --> SL
+    API --> OL
+#+end_src
+#+RESULTS:
+[[file:./images/summary-arch-overview.svg]]
+
 Major components:
 
 1. *=manifest.json=* -- declares extension; =chrome_url_overrides.newtab=;

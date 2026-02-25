@@ -19,7 +19,7 @@ decision must be filtered through this lens:
 - *No navigation chrome* -- cannot rely on sidebars, multi-page flows, complex
   menus
 - *Interactions must be fast* -- the user is /on their way somewhere else/;
-  heavy modals and multi-step forms hurt
+  heavy modals and multi-step flows hurt
 - *The value is ambient* -- seeing your current read is the primary
   interaction, not actively managing a library
 - *Local storage limits apply* -- ~browser.storage.local~ has a 10MB quota by
@@ -80,33 +80,34 @@ the new-tab context.
 
 * Feature dependencies
 
-#+BEGIN_EXAMPLE
-[Book Storage Schema]
-    └──requires──> [Add Book (Search or Manual)]
-    └──requires──> [Status Management (Want/Reading/Read)]
+#+begin_src mermaid :file ./images/features-dependency-graph.svg :theme neutral
+graph TD
+    SCHEMA["Book Storage Schema\n(schema.ts — locked Phase 1)"]
 
-[Current Book Display (New Tab Hero)]
-    └──requires──> [Status: "Reading" state]
-    └──enhances──> ["Why I want to read" notes on queue books]
+    ADD["Add Book\n(Search or Manual)"]
+    STATUS["Status Management\n(Want / Reading / Read)"]
+    HERO["Current Book Display\n(New Tab Hero)"]
+    NOTES["Reading Notes"]
+    REVIEW["Review / Rating"]
+    HISTORY["Finished Books History"]
+    QUEUE_NOTE["Why I want to read\n(intention note)"]
+    EXPORT["JSON Export"]
+    IMPORT["JSON Import"]
 
-[Reading Notes]
-    └──requires──> [Book Storage Schema]
-    └──requires──> [Status: "Reading" state]
-
-[Review / Rating]
-    └──requires──> [Status: "Read" state]
-    └──enhances──> [Finished Books History]
-
-[Finished Books History / Timeline]
-    └──requires──> [Status: "Read" + date_finished stored]
-
-[JSON Export]
-    └──requires──> [Book Storage Schema -- finalized]
-
-[JSON Import]
-    └──requires──> [JSON Export schema -- stable]
-    └──conflicts──> [Storage schema changes] (migrations needed)
-#+END_EXAMPLE
+    SCHEMA --> ADD
+    SCHEMA --> STATUS
+    STATUS --> HERO
+    HERO -.->|enhances| QUEUE_NOTE
+    SCHEMA --> NOTES
+    STATUS --> NOTES
+    STATUS --> REVIEW
+    REVIEW -.->|enhances| HISTORY
+    STATUS --> HISTORY
+    SCHEMA --> EXPORT
+    EXPORT --> IMPORT
+#+end_src
+#+RESULTS:
+[[file:./images/features-dependency-graph.svg]]
 
 Dependency notes:
 - *Book Storage Schema must be designed first* -- every feature depends on it;

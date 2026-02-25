@@ -19,27 +19,26 @@ architectures. BookTab uses *Architecture A* (no background script) because
 the new tab page has full WebExtension API access and can read/write
 ~browser.storage.local~ directly.
 
-#+BEGIN_EXAMPLE
-ARCHITECTURE A (recommended for BookTab)
+#+begin_src mermaid :file ./images/arch-system-overview.svg :theme neutral
+graph TD
+    M["manifest.json\nchrome_url_overrides.newtab\npermissions: storage"]
+    M --> H["newtab/newtab.html\n(Extension Page — privileged)"]
 
-manifest.json
-├── chrome_url_overrides.newtab → newtab/newtab.html
-└── permissions: ["storage"]
+    subgraph Page["Extension Page (privileged)"]
+        UI["UI Layer\n(HTML/CSS)"]
+        APP["App Logic\n(XState actors)"]
+        STORE["Storage Layer\n(storage.ts)"]
+        UI -- user events --> APP
+        APP -- data updates --> UI
+        APP --> STORE
+    end
 
-┌──────────────────────────────────────────────────────────┐
-│  newtab/newtab.html  (Extension Page — privileged)        │
-│                                                           │
-│  ┌────────────┐  ┌──────────────┐  ┌─────────────────┐   │
-│  │  UI Layer  │  │  App Logic   │  │  Storage Layer  │   │
-│  │ (HTML/CSS) │→ │  (JS modules)│→ │browser.storage  │   │
-│  └────────────┘  └──────────────┘  │    .local       │   │
-│         ↑               ↑          └────────┬────────┘   │
-│         └───────────────┘                   │            │
-│              re-render on change            │            │
-└──────────────────────────────────────────────────────────┘
-
-External: Open Library API (fetch from page)
-#+END_EXAMPLE
+    H --> Page
+    STORE --> SL["browser.storage.local\n(IndexedDB-backed)"]
+    APP -- fetch --> OL["Open Library API\n(openlibrary.org)"]
+#+end_src
+#+RESULTS:
+[[file:./images/arch-system-overview.svg]]
 
 Why no background script? The new tab page is a privileged extension page
 with full access to all WebExtension APIs including ~browser.storage.local~.
@@ -168,59 +167,93 @@ browser.storage.local.onChanged.addListener((changes) => {
 
 ** New tab open (read path)
 
-#+BEGIN_EXAMPLE
-User opens new tab
-    ↓
-Firefox loads newtab.html
-    ↓
-app.ts initializes → storage.ts.loadData()
-    ↓
-browser.storage.local.get('booktab_data')
-    ↓
-data returned → render(data)
-    ↓
-UI displays: current book, queue, etc.
-#+END_EXAMPLE
+#+begin_src mermaid :file ./images/arch-read-path.svg :theme neutral
+sequenceDiagram
+    actor User
+    participant Firefox
+    participant newtab.html
+    participant app.ts
+    participant storage.ts
+    participant StorageAPI as browser.storage.local
+
+    User->>Firefox: Opens new tab
+    Firefox->>newtab.html: Loads extension page
+    newtab.html->>app.ts: Initialise (DOMContentLoaded)
+    app.ts->>storage.ts: loadData()
+    storage.ts->>StorageAPI: get('booktab_data')
+    StorageAPI-->>storage.ts: { booktab_data: {...} }
+    storage.ts-->>app.ts: BookTabData
+    app.ts->>newtab.html: render(data)
+    newtab.html-->>User: UI displays current book, queue, etc.
+#+end_src
+#+RESULTS:
+[[file:./images/arch-read-path.svg]]
 
 ** User action (write path)
 
-#+BEGIN_EXAMPLE
-User action (e.g., "mark as Read")
-    ↓
-ui/currentBook.ts dispatches event to XState machine
-    ↓
-Machine transitions state → storage.ts.saveData(updatedData)
-    ↓
-browser.storage.local.set({ booktab_data: updatedData })
-    ↓
-storage.onChanged fires → re-render (all open new tabs)
-#+END_EXAMPLE
+#+begin_src mermaid :file ./images/arch-write-path.svg :theme neutral
+sequenceDiagram
+    actor User
+    participant UI as ui/currentBook.ts
+    participant Machine as XState machine
+    participant storage.ts
+    participant StorageAPI as browser.storage.local
+    participant AllTabs as All open new tabs
+
+    User->>UI: Action (e.g. "Mark as Read")
+    UI->>Machine: send(event)
+    Machine->>Machine: Transition state
+    Machine->>storage.ts: saveData(updatedData)
+    storage.ts->>StorageAPI: set({ booktab_data: updatedData })
+    StorageAPI-->>storage.ts: ok
+    StorageAPI->>AllTabs: onChanged fires
+    AllTabs->>AllTabs: re-render(newValue)
+#+end_src
+#+RESULTS:
+[[file:./images/arch-write-path.svg]]
 
 ** Export flow
 
-#+BEGIN_EXAMPLE
-User clicks "Export"
-    ↓
-importExport.ts calls storage.ts.loadData()
-    ↓
-JSON.stringify(data) → Blob
-    ↓
-Browser download dialog (URL.createObjectURL)
-#+END_EXAMPLE
+#+begin_src mermaid :file ./images/arch-export-path.svg :theme neutral
+sequenceDiagram
+    actor User
+    participant UI as ui/importExport.ts
+    participant storage.ts
+    participant StorageAPI as browser.storage.local
+    participant Browser
+
+    User->>UI: Clicks "Export"
+    UI->>storage.ts: loadData()
+    storage.ts->>StorageAPI: get('booktab_data')
+    StorageAPI-->>storage.ts: BookTabData
+    storage.ts-->>UI: BookTabData
+    UI->>UI: JSON.stringify(data) → Blob
+    UI->>Browser: URL.createObjectURL(blob)
+    Browser-->>User: Download dialog (.json file)
+#+end_src
+#+RESULTS:
+[[file:./images/arch-export-path.svg]]
 
 ** Import flow
 
-#+BEGIN_EXAMPLE
-User selects JSON file
-    ↓
-importExport.ts reads file → JSON.parse
-    ↓
-schema.ts.validate(parsed) — check structure + schemaVersion
-    ↓
-Auto-backup current data → confirm with user
-    ↓
-storage.ts.saveData(importedData) → re-render
-#+END_EXAMPLE
+#+begin_src mermaid :file ./images/arch-import-path.svg :theme neutral
+flowchart TD
+    A([User selects JSON file]) --> B[Read file contents]
+    B --> C[JSON.parse]
+    C --> D{Valid JSON?}
+    D -- No --> E([Reject: show parse error\nStorage untouched])
+    D -- Yes --> F[schema.ts.validate\ncheck structure + schemaVersion]
+    F --> G{Schema valid?}
+    G -- No --> H([Reject: show validation error\nStorage untouched])
+    G -- Yes --> I[Auto-backup current data]
+    I --> J[Show confirmation dialog]
+    J --> K{User confirms?}
+    K -- No --> L([Cancelled — Storage untouched])
+    K -- Yes --> M[storage.ts.saveData\nimportedData]
+    M --> N([Re-render UI\nImport complete])
+#+end_src
+#+RESULTS:
+[[file:./images/arch-import-path.svg]]
 
 * JSON data schema
 
