@@ -91,35 +91,35 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 1 | Pending |
-| CORE-02 | Phase 1 | Pending |
-| CORE-03 | Phase 1 | Pending |
-| CORE-04 | Phase 1 | Pending |
-| ADR-01 | Phase 1 | Pending |
-| ADR-02 | Phase 1 | Pending |
-| ADR-03 | Phase 1 | Pending |
-| DEV-01 | Phase 1 | Pending |
-| DEV-02 | Phase 1 | Pending |
-| DEV-03 | Phase 1 | Pending |
-| DEV-04 | Phase 1 | Pending |
-| DEV-05 | Phase 1 | Pending |
-| DEV-06 | Phase 1 | Pending |
-| LIB-01 | Phase 2 | Pending |
-| LIB-02 | Phase 2 | Pending |
-| LIB-03 | Phase 2 | Pending |
-| LIB-04 | Phase 2 | Pending |
-| DISP-01 | Phase 2 | Pending |
-| DISP-02 | Phase 2 | Pending |
-| DISP-03 | Phase 2 | Pending |
-| QUEUE-01 | Phase 3 | Pending |
-| QUEUE-02 | Phase 3 | Pending |
-| DATA-01 | Phase 4 | Pending |
-| DATA-02 | Phase 4 | Pending |
-| DATA-03 | Phase 4 | Pending |
+| ADR-01 | Phase 1: Tooling & Practice Foundation | Pending |
+| ADR-02 | Phase 1: Tooling & Practice Foundation | Pending |
+| ADR-03 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-01 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-02 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-03 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-04 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-05 | Phase 1: Tooling & Practice Foundation | Pending |
+| DEV-06 | Phase 1: Tooling & Practice Foundation | Pending |
+| CORE-01 | Phase 2: Extension Scaffold | Pending |
+| CORE-02 | Phase 2: Extension Scaffold | Pending |
+| CORE-03 | Phase 2: Extension Scaffold | Pending |
+| CORE-04 | Phase 2: Extension Scaffold | Pending |
+| LIB-01 | Phase 3: Library CRUD | Pending |
+| LIB-02 | Phase 3: Library CRUD | Pending |
+| LIB-03 | Phase 3: Library CRUD | Pending |
+| LIB-04 | Phase 3: Library CRUD | Pending |
+| DISP-01 | Phase 4: New Tab Display | Pending |
+| DISP-02 | Phase 4: New Tab Display | Pending |
+| DISP-03 | Phase 4: New Tab Display | Pending |
+| QUEUE-01 | Phase 5: Queue | Pending |
+| QUEUE-02 | Phase 5: Queue | Pending |
+| DATA-01 | Phase 6: Data Safety | Pending |
+| DATA-02 | Phase 6: Data Safety | Pending |
+| DATA-03 | Phase 6: Data Safety | Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 23
+- v1 requirements: 25 total
+- Mapped to phases: 25
 - Unmapped: 0 ✓
 
 ---

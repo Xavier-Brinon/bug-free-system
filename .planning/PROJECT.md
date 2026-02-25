@@ -2,11 +2,16 @@
 
 ## What This Is
 
-A Firefox browser extension that replaces the new tab page with a personal book tracker. Designed for a single user who wants to see their current read front and center every time they open a new tab, while also managing a tagged, prioritized reading queue and capturing notes and reflections on books.
+A Firefox browser extension that replaces the new tab page with a
+personal book tracker. Designed for a single user who wants to see
+their current read front and center every time they open a new tab,
+while also managing a tagged, prioritized reading queue and capturing
+notes and reflections on books.
 
 ## Core Value
 
-Every new tab is a reminder of what you're reading and what's next — keeping your reading life visible without leaving the browser.
+Every new tab is a reminder of what you're reading and what's next —
+keeping your reading life visible without leaving the browser.
 
 ## Requirements
 
