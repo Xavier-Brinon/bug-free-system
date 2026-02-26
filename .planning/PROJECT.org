@@ -60,26 +60,32 @@ keeping your reading life visible without leaving the browser.
 
 - *Platform* :: Firefox extension only -- WebExtension manifest v3
 - *Storage* :: ~browser.storage.local~ only -- no backend, no external accounts
-- *UI* :: Clean and minimal -- no heavy frameworks if avoidable
+- *UI* :: React 19 -- component model justified by multi-view complexity;
+  see ADR-0003 for rationale (supersedes original "no heavy frameworks"
+  guideline)
 - *Data portability* :: JSON import/export must preserve all book data and notes
 - *Documentation* :: Org-mode format throughout; MADR 4.0 structure for ADRs
-- *Testing* :: Vitest, TDD red-green-refactor vertical slicing
-- *State* :: XState v5 machines/actors for all stateful logic
+- *Testing* :: Vitest (jsdom) + @testing-library/react; TDD red-green-refactor
+  vertical slicing
+- *State* :: XState v5 machines/actors for all stateful logic; @xstate/react
+  hooks bridge XState to React components
 
 * Key Decisions
 
 #+CAPTION: Key architectural and process decisions
-| Decision                              | Rationale                                              | Outcome   |
-|---------------------------------------+--------------------------------------------------------+-----------|
-| Firefox extension (new tab)           | User wants it as their default new tab page            | — Pending |
-| Browser-local storage only            | No backend complexity, offline, data stays private     | — Pending |
-| JSON for import/export                | Structured, re-importable, human-inspectable           | — Pending |
-| Status-only progress tracking         | Simpler UX, page-level granularity not needed          | — Pending |
-| XState v5 for all stateful logic      | Explicit state machines, predictable, testable         | — Pending |
-| Vitest as test framework              | Native ESM, same config as Vite, fast                  | — Pending |
-| TDD red-green-refactor vertical slice | Honest tests, prevents bulk test writing               | — Pending |
-| Org-mode for all documentation        | Primary editor is Emacs; org-mode is native format     | — Pending |
+| Decision                              | Rationale                                                   | Outcome   |
+|---------------------------------------+-------------------------------------------------------------+-----------|
+| Firefox extension (new tab)           | User wants it as their default new tab page                 | — Pending |
+| Browser-local storage only            | No backend complexity, offline, data stays private          | — Pending |
+| JSON for import/export                | Structured, re-importable, human-inspectable                | — Pending |
+| Status-only progress tracking         | Simpler UX, page-level granularity not needed               | — Pending |
+| React 19 as UI layer                  | Multi-view UI complexity justifies component model (ADR-0003) | — Pending |
+| TanStack Query for async storage      | Loading/error/success states; cache invalidation (ADR-0004) | — Pending |
+| XState v5 for all stateful logic      | Explicit state machines, predictable, testable              | — Pending |
+| Vitest as test framework              | Native ESM, same config as Vite, fast                       | — Pending |
+| TDD red-green-refactor vertical slice | Honest tests, prevents bulk test writing                    | — Pending |
+| Org-mode for all documentation        | Primary editor is Emacs; org-mode is native format          | — Pending |
 | MADR ADRs in org-mode format          | MADR structure preserved; =.org= files in =docs/decisions/= | — Pending |
 
 ---
-/Last updated: [2026-02-25 Tue] after initialization/
+/Last updated: [2026-02-26 Thu] -- React 19 confirmed; TanStack Query added; constraint revised/

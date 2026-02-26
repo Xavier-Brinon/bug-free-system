@@ -8,16 +8,19 @@
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
 - *Created* :: [2026-02-25 Tue]
+- *Revised* :: [2026-02-26 Thu] -- Phase 1 gains 3 ADR tasks (React, TanStack
+  Query, Storybook); Phase 2 gains Playwright ADR; ADR numbering revised
 - *Depth* :: Comprehensive
 - *Coverage* :: 25/25 v1 requirements mapped ✓
 
 * Phases
 
 - [ ] *Phase 1: Tooling & Practice Foundation* -- ADR infrastructure, Vitest
-  + TDD methodology locked in, developer practice standards established before
-  any feature code
+  + TDD methodology locked in, React/TanStack/Storybook decisions recorded
+  before any feature code
 - [ ] *Phase 2: Extension Scaffold* -- Working Firefox extension shell with
-  versioned data schema, XState wiring, and all critical pitfalls pre-empted
+  versioned data schema, XState + React wiring, Storybook setup, Playwright
+  smoke test infrastructure, and all critical pitfalls pre-empted
 - [ ] *Phase 3: Library CRUD* -- User can add, edit, delete, and change the
   status of books; the core data loop works end-to-end
 - [ ] *Phase 4: New Tab Display* -- Current book is shown prominently on every
@@ -57,7 +60,8 @@ graph LR
 
 All developer tooling, testing infrastructure, and documented practices are
 in place before a single feature is written -- so every subsequent phase
-builds on a known-good foundation.
+builds on a known-good foundation. This includes ADRs for all stack
+decisions made before Phase 2 (React 19, TanStack Query, Storybook).
 
 *** Dependencies
 
@@ -70,10 +74,9 @@ ADR-01, ADR-02, ADR-03, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06
 *** Success criteria
 
 1. =docs/decisions/= directory exists with MADR 4.0 template (org-mode) and
-   at least two ADRs: one for the test framework choice, one for TDD
-   methodology
-2. =vitest.config.ts= is present and ~npm run test~ executes successfully,
-   returning no failures on an empty test suite
+   five ADRs: Vitest, TDD methodology, React 19, TanStack Query, Storybook
+2. =vitest.config.ts= is present with jsdom environment and ~npm run test~
+   executes successfully, returning no failures on an empty test suite
 3. A contributor can read =docs/decisions/= and understand the rationale for
    every architectural choice made so far -- no undocumented decisions exist
 4. The red-green-refactor workflow is documented in an ADR and practice rules
@@ -84,12 +87,12 @@ ADR-01, ADR-02, ADR-03, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06
 
 *** Plans
 
-3 plans across 2 waves.
+5 plans across 2 waves.
 
 Plans:
 - [ ] 01-01-PLAN.md — ADR infrastructure (docs/decisions/ + MADR template) + CONTRIBUTING.org
-- [ ] 01-02-PLAN.md — Vitest configuration (package.json + vitest.config.ts + tsconfig.json)
-- [ ] 01-03-PLAN.md — ADR-0001 (Vitest) + ADR-0002 (TDD methodology)
+- [ ] 01-02-PLAN.md — Vitest + React + TanStack configuration (package.json + vitest.config.ts + tsconfig.json)
+- [ ] 01-03-PLAN.md — ADR-0001 (Vitest) + ADR-0002 (TDD) + ADR-0003 (React) + ADR-0004 (TanStack Query) + ADR-0005 (Storybook)
 
 ** Phase 2: Extension Scaffold
 :PROPERTIES:
@@ -100,8 +103,10 @@ Plans:
 
 A working Firefox extension that loads as the new tab page, reads and writes
 data to ~browser.storage.local~ with a versioned schema, manages all state
-via XState v5 actors, and pre-empts every critical pitfall identified in
-research.
+via XState v5 actors wired into React components via ~@xstate/react~, has
+Storybook configured for component isolation, and pre-empts every critical
+pitfall identified in research. Playwright / Chromium E2E smoke test
+infrastructure is introduced here alongside the first Vite production build.
 
 *** Dependencies
 
@@ -123,10 +128,19 @@ CORE-01, CORE-02, CORE-03, CORE-04
    inspectable via the browser console; the schema matches the locked definition
 5. All stateful logic is wired through XState v5 machine/actor(s) -- no
    ad-hoc flags manage async transitions
+6. Storybook runs (~npm run storybook~) and displays at least one component
+   story without error
+7. Playwright smoke test suite runs against the Chromium build and passes
 
 *** Plans
 
-TBD
+TBD -- includes:
+- ADR-0006 (Playwright / Chromium E2E strategy)
+- ADR-0007 (XState v5 state management)
+- ADR-0008 (browser.storage.local only)
+- ADR-0009 (Open Library API)
+- Storybook setup + first story
+- Playwright smoke test scaffold
 
 ** Phase 3: Library CRUD
 :PROPERTIES:
@@ -319,15 +333,19 @@ Total v1 mapped: 25/25 ✓
 
 * Key Decisions
 
-#+CAPTION: Decisions to be documented as ADRs
-| Decision                                    | ADR file          | Phase |
-|---------------------------------------------+-------------------+-------|
-| Test framework: Vitest                      | =0001-vitest.org= |     1 |
-| TDD: red-green-refactor vertical slices     | =0002-tdd.org=    |     1 |
-| State management: XState v5                 | =0003-xstate.org= |     2 |
-| Storage: ~browser.storage.local~ only       | =0004-storage.org= |    2 |
-| Book metadata: Open Library (no API key)   | =0005-open-library.org= | 2 |
-| Data portability: versioned JSON export     | =0006-json-schema.org= | 6 |
+#+CAPTION: Decisions to be documented as ADRs (revised numbering)
+| Decision                                    | ADR file                  | Phase |
+|---------------------------------------------+---------------------------+-------|
+| Test framework: Vitest                      | =0001-vitest.org=         |     1 |
+| TDD: red-green-refactor vertical slices     | =0002-tdd.org=            |     1 |
+| UI layer: React 19                          | =0003-react.org=          |     1 |
+| Async storage: TanStack Query               | =0004-tanstack-query.org= |     1 |
+| Component isolation: Storybook              | =0005-storybook.org=      |     1 |
+| E2E testing: Playwright / Chromium          | =0006-playwright.org=     |     2 |
+| State management: XState v5                 | =0007-xstate.org=         |     2 |
+| Storage: ~browser.storage.local~ only       | =0008-storage.org=        |     2 |
+| Book metadata: Open Library (no API key)    | =0009-open-library.org=   |     2 |
+| Data portability: versioned JSON export     | =0010-json-schema.org=    |     6 |
 
 * Depth Calibration Note
 
@@ -340,5 +358,5 @@ comprehensive read for this scope.
 
 ---
 /Roadmap created: [2026-02-25 Tue]/
+/Revised: [2026-02-26 Thu] -- Phase 1 updated for React/TanStack/Storybook ADRs; ADR numbering revised 0001-0010/
 /Requirements: 25 v1, 0 orphaned/
-/Next: =/gsd-plan-phase 1=/
