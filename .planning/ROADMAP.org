@@ -340,7 +340,7 @@ Total v1 mapped: 25/25 ✓
 #+CAPTION: ADR log -- written before each decision is implemented; superseded if revised
 | Decision                                    | ADR file                  | Phase written |
 |---------------------------------------------+---------------------------+---------------|
-| Test framework: Vitest                      | =0001-vitest.org=         |             1 |
+| Test framework: Vitest (jsdom)              | =0001-vitest.org=         |             1 |
 | TDD: red-green-refactor vertical slices     | =0002-tdd.org=            |             1 |
 | UI layer: React 19                          | =0003-react.org=          |             1 |
 | Async storage: TanStack Query               | =0004-tanstack-query.org= |             1 |
@@ -350,6 +350,7 @@ Total v1 mapped: 25/25 ✓
 | Storage: ~browser.storage.local~ only       | =0008-storage.org=        |             2 |
 | Book metadata: Open Library (no API key)    | =0009-open-library.org=   |             3 |
 | Data portability: versioned JSON export     | =0010-json-schema.org=    |             6 |
+| Test env: Vitest browser mode (supersedes 0001) | =0012-vitest-browser-mode.org= |        1 |
 
 * Depth Calibration Note
 

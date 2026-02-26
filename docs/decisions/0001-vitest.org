@@ -6,7 +6,7 @@
 
 * Status
 
-Accepted
+Superseded by [[file:0012-vitest-browser-mode.org][ADR-0012]]
 
 * Context and Problem Statement
 

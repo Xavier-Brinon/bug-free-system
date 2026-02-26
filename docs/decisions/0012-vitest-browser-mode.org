@@ -1,0 +1,146 @@
+#+title: Use Vitest browser mode instead of jsdom for component tests
+#+author: BookTab
+#+date: [2026-02-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+Supersedes: [[file:0001-vitest.org][ADR-0001 (Vitest with jsdom)]]
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+ADR-0001 chose Vitest with jsdom as the test environment. jsdom is a
+JavaScript simulation of the DOM that runs in Node.js. While convenient and
+fast, it is not a real browser -- it fakes CSS, layout, events, focus
+management, and many browser APIs. Vitest 4.x introduced a stable browser
+mode that runs component tests in a real Chromium instance via Playwright,
+providing full fidelity with no simulation layer.
+
+Since BookTab is a browser extension whose UI runs entirely in a browser tab,
+testing in a real browser catches issues that jsdom silently misses: CSS
+layout problems, real event propagation, actual focus management, and genuine
+browser API behaviour.
+
+* Decision Drivers
+
+- jsdom simulates a browser but does not run in one -- CSS rendering, layout,
+  focus, and event propagation are incomplete or absent
+- Vitest browser mode is now the recommended approach for component testing
+  (Vitest 4.x docs: "Browser Mode is the recommended approach for component
+  testing")
+- BookTab already plans to use Playwright/Chromium for E2E smoke tests
+  (ADR-0006, Phase 2) -- browser mode shares the same Playwright
+  infrastructure
+- =vitest-browser-react= replaces =@testing-library/react= with the same
+  query API (=getByRole=, =getByText=, =getByLabelText=) but running in
+  real Chromium
+- Unit tests (XState machines, storage module, schema validation) do not need
+  a browser and can run in Node for speed
+
+* Considered Options
+
+- Vitest browser mode (Playwright + Chromium) for component tests, Node for
+  unit tests
+- Keep jsdom for all tests (status quo from ADR-0001)
+- happy-dom (faster jsdom alternative, still a simulation)
+
+* Decision Outcome
+
+Chosen option: "Vitest browser mode", because component tests run in a real
+Chromium browser via Playwright, providing full fidelity. Unit/logic tests
+run in Node for speed. This eliminates the simulation layer entirely for UI
+tests.
+
+The test configuration uses Vitest's =projects= feature to split into two
+environments:
+
+- =unit= project: =tests/unit/**/*.test.ts= and =src/**/*.test.ts= run in
+  Node (pure logic: machines, schemas, utilities)
+- =browser= project: =tests/browser/**/*.test.tsx= and =src/**/*.test.tsx=
+  run in Chromium via =@vitest/browser-playwright=
+
+Component tests use =vitest-browser-react= for rendering (=render()=) and
+Vitest's built-in =expect.element()= for assertions -- no separate
+=@testing-library/jest-dom= needed.
+
+** Positive Consequences
+
+- Component tests run in a real browser: CSS layout, event propagation, focus
+  management, and browser APIs all behave exactly as they would for the user
+- Catches real-world issues that jsdom silently passes (false positives
+  eliminated)
+- Shares Playwright/Chromium infrastructure with the E2E smoke tests planned
+  for Phase 2 -- one browser runtime, not two separate testing strategies
+- =vitest-browser-react= provides the same query API as
+  =@testing-library/react= (=getByRole=, =getByText=, etc.) -- familiar
+  patterns, no learning curve
+- Unit tests in Node remain fast (no browser startup overhead for pure logic)
+
+** Negative Consequences / Trade-offs
+
+- Component tests are slower than jsdom (browser startup + rendering overhead)
+  -- acceptable for a project of this size
+- Requires Chromium installed locally (=npx playwright install chromium=) --
+  one-time setup
+- =vitest-browser-react= is newer than =@testing-library/react= -- smaller
+  community, fewer StackOverflow answers (Vitest docs are comprehensive)
+
+* Pros and Cons of the Options
+
+** Vitest browser mode (Playwright + Chromium)
+
+- Good, because tests run in a real browser with full DOM, CSS, and API fidelity
+- Good, because recommended by Vitest docs for component testing
+- Good, because shares Playwright infrastructure with planned E2E tests
+- Good, because eliminates false positives from DOM simulation gaps
+- Bad, because slower than jsdom for component tests
+- Bad, because requires Chromium installed locally
+
+** Keep jsdom (ADR-0001 status quo)
+
+- Good, because fast -- no browser startup
+- Good, because well-established, large community
+- Bad, because simulates the DOM -- CSS, layout, focus, and some events are
+  incomplete or wrong
+- Bad, because can produce false positives (tests pass but real browser fails)
+- Bad, because separate from E2E infrastructure (jsdom for tests, Playwright
+  for E2E -- two different worlds)
+
+** happy-dom
+
+- Good, because faster than jsdom
+- Good, because drop-in jsdom replacement
+- Bad, because still a simulation -- same fundamental fidelity gap as jsdom
+- Bad, because smaller community than jsdom
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0012-vitest-test-split.svg :theme neutral
+graph TD
+    subgraph Config["vitest.config.ts (projects)"]
+        U["unit project\n(Node environment)"]
+        B["browser project\n(Playwright + Chromium)"]
+    end
+
+    subgraph UnitTests["Unit tests (*.test.ts)"]
+        UT1["XState machines"]
+        UT2["Storage module"]
+        UT3["Schema validation"]
+        UT4["Utility functions"]
+    end
+
+    subgraph BrowserTests["Component tests (*.test.tsx)"]
+        BT1["React components\n(vitest-browser-react)"]
+        BT2["User interactions\n(click, fill, etc.)"]
+        BT3["DOM assertions\n(expect.element)"]
+    end
+
+    U --> UnitTests
+    B --> BrowserTests
+    B -- "launches" --> PW["Chromium\n(real browser)"]
+#+end_src
+#+RESULTS:
+[[file:./images/0012-vitest-test-split.svg]]

@@ -108,10 +108,11 @@ This produces a complete, honest decision log.
 
 * Current ADRs
 
-| ADR  | Decision                           | Status   |
-|------+------------------------------------+----------|
-| 0001 | Vitest as test framework           | Accepted |
-| 0002 | TDD red-green-refactor methodology | Accepted |
-| 0003 | React 19 as UI rendering layer     | Accepted |
-| 0004 | TanStack Query for async storage   | Accepted |
-| 0005 | Storybook for component isolation  | Accepted |
+| ADR  | Decision                                     | Status                |
+|------+----------------------------------------------+-----------------------|
+| 0001 | Vitest as test framework (jsdom)             | Superseded by 0012    |
+| 0002 | TDD red-green-refactor methodology           | Accepted              |
+| 0003 | React 19 as UI rendering layer               | Accepted              |
+| 0004 | TanStack Query for async storage             | Accepted              |
+| 0005 | Storybook for component isolation            | Accepted              |
+| 0012 | Vitest browser mode (replaces jsdom)         | Accepted              |
