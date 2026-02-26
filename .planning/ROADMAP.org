@@ -19,7 +19,7 @@
 - [X] *Phase 1: Tooling & Practice Foundation* -- ADR infrastructure, Vitest
   + TDD methodology locked in, React/TanStack/Storybook decisions recorded
   before any feature code
-- [ ] *Phase 2: Extension Scaffold* -- Working Firefox extension shell with
+- [X] *Phase 2: Extension Scaffold* -- Working Firefox extension shell with
   versioned data schema, XState + React wiring, Storybook setup, Playwright
   smoke test infrastructure, and all critical pitfalls pre-empted
 - [ ] *Phase 3: Library CRUD* -- User can add, edit, delete, and change the
@@ -141,11 +141,11 @@ CORE-01, CORE-02, CORE-03, CORE-04
 
 5 plans, 4 waves:
 
-- [ ] 02-01-PLAN.md — Tidy-up + ADR-0006 (Playwright E2E) + ADR-0007 (XState) + ADR-0008 (storage.local) [Wave 1]
-- [ ] 02-02-PLAN.md — Vite extension scaffold: manifest, build pipeline, minimal React app [Wave 2]
-- [ ] 02-03-PLAN.md — Data schema + storage layer with TDD (TanStack Query) [Wave 2]
-- [ ] 02-04-PLAN.md — XState v5 app machine with TDD + React wiring [Wave 3]
-- [ ] 02-05-PLAN.md — Storybook setup + first story + Playwright E2E smoke test [Wave 4]
+- [X] 02-01-PLAN.md — Tidy-up + ADR-0006 (Playwright E2E) + ADR-0007 (XState) + ADR-0008 (storage.local) [Wave 1]
+- [X] 02-02-PLAN.md — Vite extension scaffold: manifest, build pipeline, minimal React app [Wave 2]
+- [X] 02-03-PLAN.md — Data schema + storage layer with TDD (TanStack Query) [Wave 2]
+- [X] 02-04-PLAN.md — XState v5 app machine with TDD + React wiring [Wave 3]
+- [X] 02-05-PLAN.md — Storybook setup + first story + Playwright E2E smoke test [Wave 4]
 
 ** Phase 3: Library CRUD
 :PROPERTIES:
@@ -180,7 +180,12 @@ LIB-01, LIB-02, LIB-03, LIB-04
 
 *** Plans
 
-TBD
+4 plans, 3 waves:
+
+- [ ] 03-01-PLAN.md — Tidy-up + createBookRecord() factory + library XState machine (TDD) [Wave 1]
+- [ ] 03-02-PLAN.md — BookForm component for add/edit (TDD, browser tests) [Wave 2]
+- [ ] 03-03-PLAN.md — BookCard + BookList components for display/delete/status (TDD, browser tests) [Wave 2]
+- [ ] 03-04-PLAN.md — Wire into App.tsx + extend appMachine + Storybook stories + Playwright E2E [Wave 3]
 
 ** Phase 4: New Tab Display
 :PROPERTIES:
