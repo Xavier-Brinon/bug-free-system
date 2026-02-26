@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 2 -- Extension Scaffold
+- *Current Focus* :: Phase 3 -- Library CRUD (complete)
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
@@ -25,14 +25,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 2: Extension Scaffold        |
-| Current Plan     | 02-05 (complete)                   |
-| Phase Status     | Complete (5 plans, 4 waves)        |
-| Overall Progress | 2/6 phases complete                |
+| Current Phase    | Phase 3: Library CRUD              |
+| Current Plan     | 03-04 (complete)                   |
+| Phase Status     | Complete (4 plans, 3 waves)        |
+| Overall Progress | 3/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████████░░░░░░░░░░░░] 33%
-Phase 1 [████] → Phase 2 [████] → Phase 3 [░░░░] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████████████░░░░░░░░] 50%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -42,7 +42,7 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [░░░░] →
 |-------+-----------------------------+-------------------------+-------------|
 |     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Complete    |
 |     2 | Extension Scaffold          | CORE-01--04             | Complete    |
-|     3 | Library CRUD                | LIB-01--04              | Not started |
+|     3 | Library CRUD                | LIB-01--04              | Complete    |
 |     4 | New Tab Display             | DISP-01--03             | Not started |
 |     5 | Queue                       | QUEUE-01--02            | Not started |
 |     6 | Data Safety                 | DATA-01--03             | Not started |
@@ -52,11 +52,11 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [░░░░] →
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 2 / 6  |
-| Requirements met | 13 / 25 |
-| Plans executed   | 8      |
+| Phases complete  | 3 / 6  |
+| Requirements met | 17 / 25 |
+| Plans executed   | 12     |
 | ADRs written     | 10     |
-| Tests passing    | 23     |
+| Tests passing    | 81     |
 
 * Accumulated Context
 
@@ -210,20 +210,19 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 2 complete: 5 plans executed across
-  4 waves. Extension scaffold built with manifest, Vite build, React app, data
-  schema (schemaVersion: 1), storage layer (TanStack Query), XState app machine
-  (loading/ready/error), Storybook stories, and Playwright E2E smoke test.
-  4 ADRs written (0006, 0007, 0008, 0011). Oxlint + Oxfmt installed for code
-  quality. 23 unit tests passing. E2E smoke test passing.
-- *Next action* :: Merge =phase-02/extension-scaffold= to =main=, then plan
-  and execute Phase 3 (Library CRUD).
-- *Context for next session* :: Phase 2 is complete on the
-  =phase-02/extension-scaffold= branch. All scripts work: =test=, =build=,
-  =e2e=, =lint=, =fmt:check=, =lint:ext=, =storybook=. The extension loads
-  in Chromium via Playwright and renders "BookTab". Phase 3 (Library CRUD)
-  adds book add/edit/delete functionality with the existing schema and storage
-  layer. Plans for Phase 3 need to be created.
+- *Last action* :: [2026-02-26 Thu] -- Phase 3 complete: 4 plans executed across
+  3 waves. Library CRUD implemented with BookForm (add/edit), BookCard (display
+  + actions), BookList (collection + empty state), libraryMachine (XState v5
+  CRUD), and appMachine extended with ready sub-states (viewing/adding/editing).
+  Full integration in App.tsx with persistence to browser.storage.local.
+  Storybook stories for all components. E2E test for add-list-delete flow.
+  81 tests passing (46 unit + 20 browser + 12 storybook + 2 E2E + 1 lint check).
+- *Next action* :: Plan and execute Phase 4 (New Tab Display).
+- *Context for next session* :: Phase 3 is complete on =main=. The extension
+  supports full CRUD: add books, edit details, change reading status, delete
+  books. All changes persist to browser.storage.local. Phase 4 (New Tab Display)
+  adds the reading dashboard: currently reading, reading queue, and reading
+  history views. Plans for Phase 4 need to be created.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/

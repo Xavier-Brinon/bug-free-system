@@ -4,12 +4,17 @@ import type { BookTabData } from "../schema";
 type AppContext = {
   data: BookTabData | null;
   error: string | null;
+  editingBookId: string | null;
 };
 
 type AppEvent =
   | { type: "DATA_LOADED"; data: BookTabData }
   | { type: "DATA_FAILED"; error: string }
-  | { type: "RETRY" };
+  | { type: "RETRY" }
+  | { type: "START_ADD" }
+  | { type: "START_EDIT"; bookId: string }
+  | { type: "CANCEL_FORM" }
+  | { type: "BOOK_SAVED" };
 
 export const appMachine = setup({
   types: {
@@ -22,6 +27,7 @@ export const appMachine = setup({
   context: {
     data: null,
     error: null,
+    editingBookId: null,
   },
   states: {
     loading: {
@@ -42,11 +48,47 @@ export const appMachine = setup({
       },
     },
     ready: {
+      initial: "viewing",
       on: {
         DATA_LOADED: {
           actions: assign({
             data: ({ event }) => event.data,
           }),
+        },
+      },
+      states: {
+        viewing: {
+          on: {
+            START_ADD: { target: "adding" },
+            START_EDIT: {
+              target: "editing",
+              actions: assign({
+                editingBookId: ({ event }) => event.bookId,
+              }),
+            },
+          },
+        },
+        adding: {
+          on: {
+            CANCEL_FORM: { target: "viewing" },
+            BOOK_SAVED: { target: "viewing" },
+          },
+        },
+        editing: {
+          on: {
+            CANCEL_FORM: {
+              target: "viewing",
+              actions: assign({
+                editingBookId: () => null,
+              }),
+            },
+            BOOK_SAVED: {
+              target: "viewing",
+              actions: assign({
+                editingBookId: () => null,
+              }),
+            },
+          },
         },
       },
     },

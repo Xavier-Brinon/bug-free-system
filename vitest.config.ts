@@ -49,6 +49,9 @@ export default defineConfig({
             configDir: path.join(dirname, ".storybook"),
           }),
         ],
+        optimizeDeps: {
+          include: ["storybook/test"],
+        },
         test: {
           // Storybook stories as tests via @storybook/addon-vitest
           name: "storybook",

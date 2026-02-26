@@ -20,18 +20,128 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-height: 100vh;
   padding: 2rem;
+  gap: 1.5rem;
 }
 
 .app h1 {
   font-size: 2rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .app p {
   font-size: 1.125rem;
   color: #666;
+}
+
+/* Add Book button */
+.app > button {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  border: 2px solid #1a1a1a;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.app > button:hover {
+  background: #f0f0f0;
+}
+
+/* BookForm */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+form div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+form label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+form input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+form button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: #fff;
+}
+
+form button[type="submit"] {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+form button[type="submit"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* BookCard */
+article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%;
+  max-width: 400px;
+}
+
+article h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+article p {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+article img {
+  max-width: 80px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+article select {
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+article button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  background: #fff;
+}
+
+article button:hover {
+  background: #f0f0f0;
 }
