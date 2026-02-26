@@ -15,7 +15,7 @@ describe("appMachine", () => {
     const actor = createActor(appMachine);
     actor.start();
     actor.send({ type: "DATA_LOADED", data: getDefaultData() });
-    expect(actor.getSnapshot().value).toBe("ready");
+    expect(actor.getSnapshot().matches("ready")).toBe(true);
     actor.stop();
   });
 
@@ -41,9 +41,9 @@ describe("appMachine", () => {
     const actor = createActor(appMachine);
     actor.start();
     actor.send({ type: "DATA_LOADED", data: getDefaultData() });
-    expect(actor.getSnapshot().value).toBe("ready");
+    expect(actor.getSnapshot().matches("ready")).toBe(true);
     actor.send({ type: "DATA_FAILED", error: "Should not transition" });
-    expect(actor.getSnapshot().value).toBe("ready");
+    expect(actor.getSnapshot().matches("ready")).toBe(true);
     actor.stop();
   });
 
@@ -79,8 +79,66 @@ describe("appMachine", () => {
     expect(actor.getSnapshot().context.data).toEqual(initialData);
 
     actor.send({ type: "DATA_LOADED", data: updatedData });
-    expect(actor.getSnapshot().value).toBe("ready");
+    expect(actor.getSnapshot().matches("ready")).toBe(true);
     expect(actor.getSnapshot().context.data).toEqual(updatedData);
+    actor.stop();
+  });
+
+  it("ready state has initial sub-state viewing", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
+    actor.stop();
+  });
+
+  it("START_ADD transitions from ready.viewing to ready.adding", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "START_ADD" });
+    expect(actor.getSnapshot().matches({ ready: "adding" })).toBe(true);
+    actor.stop();
+  });
+
+  it("START_EDIT transitions to ready.editing and stores editingBookId", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "START_EDIT", bookId: "book-42" });
+    expect(actor.getSnapshot().matches({ ready: "editing" })).toBe(true);
+    expect(actor.getSnapshot().context.editingBookId).toBe("book-42");
+    actor.stop();
+  });
+
+  it("CANCEL_FORM transitions from ready.adding to ready.viewing", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "START_ADD" });
+    actor.send({ type: "CANCEL_FORM" });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
+    actor.stop();
+  });
+
+  it("CANCEL_FORM transitions from ready.editing to ready.viewing and clears editingBookId", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "START_EDIT", bookId: "book-42" });
+    actor.send({ type: "CANCEL_FORM" });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
+    expect(actor.getSnapshot().context.editingBookId).toBeNull();
+    actor.stop();
+  });
+
+  it("BOOK_SAVED transitions from ready.adding to ready.viewing", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "START_ADD" });
+    actor.send({ type: "BOOK_SAVED" });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
     actor.stop();
   });
 });
