@@ -1,0 +1,160 @@
+#+title: BookTab
+#+startup: indent
+#+options: toc:2 num:nil ^:{}
+
+*Your reading life, one new tab at a time.*
+
+A Firefox browser extension that replaces the new tab page with a personal
+book tracker. See your current read front and center every time you open a
+new tab, manage a reading queue, and capture notes and reflections.
+
+* Overview
+
+BookTab is a React single-page application packaged as a Firefox extension
+(Manifest V3). There are no background scripts, no content scripts, no
+popup -- just a React app running in a privileged new tab page with access
+to ~browser.storage.local~ for persistence.
+
+All data stays local. No accounts, no servers, no tracking.
+
+* Features (v1 scope)
+
+- Replace Firefox's new tab page with your book tracker
+- Add books manually (title, author, optional cover URL)
+- Track reading status: Want to Read / Reading / Read
+- Edit and delete books
+- Current book displayed prominently on every new tab
+- Want-to-read queue with intention notes
+- Export/import library as JSON for backup and portability
+
+* Tech Stack
+
+| Layer              | Tool                               |
+|--------------------+------------------------------------|
+| Extension          | Firefox WebExtension MV3           |
+| UI                 | React 19                           |
+| Build              | Vite + vite-plugin-web-extension   |
+| State management   | XState v5                          |
+| Async data         | TanStack Query                     |
+| Schema validation  | Zod v4                             |
+| Unit tests         | Vitest (Node)                      |
+| Component tests    | Vitest Browser (Playwright)        |
+| Component stories  | Storybook v10                      |
+| E2E tests          | Playwright (Chromium)              |
+| Linting            | Oxlint                             |
+| Formatting         | Oxfmt                              |
+| Extension linting  | web-ext lint                       |
+
+* Getting Started
+
+** Prerequisites
+
+- Node.js >= 20
+- npm >= 10
+- Firefox (for manual testing)
+
+** Install
+
+#+begin_src sh
+npm install
+#+end_src
+
+** Development
+
+#+begin_src sh
+npm run dev          # Vite dev server (for local development)
+npm run build        # Production build → dist/
+npm run storybook    # Storybook at http://localhost:6006
+#+end_src
+
+** Testing
+
+#+begin_src sh
+npm test             # Run all tests (unit + storybook)
+npm run test:watch   # Watch mode
+npm run e2e          # Build + Playwright E2E smoke test
+#+end_src
+
+** Code Quality
+
+#+begin_src sh
+npm run lint         # Oxlint
+npm run lint:fix     # Oxlint with auto-fix
+npm run fmt          # Oxfmt (format in place)
+npm run fmt:check    # Oxfmt (check only)
+npm run lint:ext     # web-ext lint on dist/
+#+end_src
+
+** Load in Firefox
+
+1. Run ~npm run build~
+2. Open Firefox and go to ~about:debugging#/runtime/this-firefox~
+3. Click "Load Temporary Add-on..."
+4. Select ~dist/manifest.json~
+5. Open a new tab -- BookTab should appear
+
+* Project Structure
+
+#+begin_example
+src/
+  newtab/          New tab page (React entry point, App component, stories)
+  machines/        XState state machines
+  schema.ts        Zod schemas, types, defaults
+  storage.ts       browser.storage.local wrapper (TanStack Query)
+tests/
+  unit/            Node-based unit tests
+  e2e/             Playwright E2E tests
+docs/
+  decisions/       Architecture Decision Records (MADR 4.0, org-mode)
+.planning/         Project planning (roadmap, requirements, state, research)
+.storybook/        Storybook configuration
+#+end_example
+
+* Architecture Decisions
+
+All significant decisions are recorded as ADRs in =docs/decisions/=. Key
+decisions:
+
+| ADR  | Decision                                        |
+|------+-------------------------------------------------|
+| 0001 | Vitest as test framework                        |
+| 0002 | TDD red-green-refactor methodology              |
+| 0003 | React 19 for UI layer                           |
+| 0004 | TanStack Query for async storage                |
+| 0005 | Storybook for component isolation               |
+| 0006 | Playwright/Chromium for E2E testing              |
+| 0007 | XState v5 for state management                  |
+| 0008 | browser.storage.local as sole persistence        |
+| 0011 | Oxc (Oxlint + Oxfmt) for code quality            |
+| 0012 | Vitest browser mode (supersedes 0001 jsdom)      |
+
+See [[file:docs/decisions/README.org][docs/decisions/README.org]] for the
+full log.
+
+* Development Practices
+
+This project follows strict development practices documented in
+[[file:CONTRIBUTING.org][CONTRIBUTING.org]]:
+
+1. Mandatory tidy-up before new features (every phase)
+2. ADR before implementation (every architectural decision)
+3. TDD red-green-refactor vertical slicing
+4. Public interface testing only (no internal mocks)
+5. No bulk test writing
+6. Mermaid diagrams in ADRs
+7. Branch per phase, merge to main when complete
+
+* Progress
+
+| Phase | Name                 | Status   |
+|-------+----------------------+----------|
+|     1 | Tooling & Practice   | Complete |
+|     2 | Extension Scaffold   | Complete |
+|     3 | Library CRUD         | Planned  |
+|     4 | New Tab Display      | Planned  |
+|     5 | Queue                | Planned  |
+|     6 | Data Safety          | Planned  |
+
+* License
+
+ISC
