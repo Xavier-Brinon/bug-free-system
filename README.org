@@ -4,16 +4,17 @@
 
 *Your reading life, one new tab at a time.*
 
-A Firefox browser extension that replaces the new tab page with a personal
-book tracker. See your current read front and center every time you open a
-new tab, manage a reading queue, and capture notes and reflections.
+A Firefox browser extension that replaces the new tab page with a
+personal book tracker. See your current read front and center every
+time you open a new tab, manage a reading queue, and capture notes and
+reflections.
 
 * Overview
 
-BookTab is a React single-page application packaged as a Firefox extension
-(Manifest V3). There are no background scripts, no content scripts, no
-popup -- just a React app running in a privileged new tab page with access
-to ~browser.storage.local~ for persistence.
+BookTab is a React single-page application packaged as a Firefox
+extension (Manifest V3). There are no background scripts, no content
+scripts, no popup -- just a React app running in a privileged new tab
+page with access to ~browser.storage.local~ for persistence.
 
 All data stays local. No accounts, no servers, no tracking.
 
@@ -29,60 +30,60 @@ All data stays local. No accounts, no servers, no tracking.
 
 * Tech Stack
 
-| Layer              | Tool                               |
-|--------------------+------------------------------------|
-| Extension          | Firefox WebExtension MV3           |
-| UI                 | React 19                           |
-| Build              | Vite + vite-plugin-web-extension   |
-| State management   | XState v5                          |
-| Async data         | TanStack Query                     |
-| Schema validation  | Zod v4                             |
-| Unit tests         | Vitest (Node)                      |
-| Component tests    | Vitest Browser (Playwright)        |
-| Component stories  | Storybook v10                      |
-| E2E tests          | Playwright (Chromium)              |
-| Linting            | Oxlint                             |
-| Formatting         | Oxfmt                              |
-| Extension linting  | web-ext lint                       |
+| Layer             | Tool                             |
+|-------------------+----------------------------------|
+| Extension         | Firefox WebExtension MV3         |
+| UI                | React 19                         |
+| Build             | Vite + vite-plugin-web-extension |
+| State management  | XState v5                        |
+| Async data        | TanStack Query                   |
+| Schema validation | Zod v4                           |
+| Unit tests        | Vitest (Node)                    |
+| Component tests   | Vitest Browser (Playwright)      |
+| Component stories | Storybook v10                    |
+| E2E tests         | Playwright (Chromium)            |
+| Linting           | Oxlint                           |
+| Formatting        | Oxfmt                            |
+| Extension linting | web-ext lint                     |
 
 * Getting Started
 
 ** Prerequisites
 
-- Node.js >= 20
-- npm >= 10
+- Node.js >= 24 (LTS)
+- npm >= 11 (bundled with Node LTS)
 - Firefox (for manual testing)
 
 ** Install
 
 #+begin_src sh
-npm install
+  npm install
 #+end_src
 
 ** Development
 
 #+begin_src sh
-npm run dev          # Vite dev server (for local development)
-npm run build        # Production build → dist/
-npm run storybook    # Storybook at http://localhost:6006
+  npm run dev          # Vite dev server (for local development)
+  npm run build        # Production build → dist/
+  npm run storybook    # Storybook at http://localhost:6006
 #+end_src
 
 ** Testing
 
 #+begin_src sh
-npm test             # Run all tests (unit + storybook)
-npm run test:watch   # Watch mode
-npm run e2e          # Build + Playwright E2E smoke test
+  npm test             # Run all tests (unit + storybook)
+  npm run test:watch   # Watch mode
+  npm run e2e          # Build + Playwright E2E smoke test
 #+end_src
 
 ** Code Quality
 
 #+begin_src sh
-npm run lint         # Oxlint
-npm run lint:fix     # Oxlint with auto-fix
-npm run fmt          # Oxfmt (format in place)
-npm run fmt:check    # Oxfmt (check only)
-npm run lint:ext     # web-ext lint on dist/
+  npm run lint         # Oxlint
+  npm run lint:fix     # Oxlint with auto-fix
+  npm run fmt          # Oxfmt (format in place)
+  npm run fmt:check    # Oxfmt (check only)
+  npm run lint:ext     # web-ext lint on dist/
 #+end_src
 
 ** Load in Firefox
@@ -112,24 +113,23 @@ docs/
 
 * Architecture Decisions
 
-All significant decisions are recorded as ADRs in =docs/decisions/=. Key
-decisions:
+All significant decisions are recorded as ADRs in =docs/decisions/=.
+Key decisions:
 
-| ADR  | Decision                                        |
-|------+-------------------------------------------------|
-| 0001 | Vitest as test framework                        |
-| 0002 | TDD red-green-refactor methodology              |
-| 0003 | React 19 for UI layer                           |
-| 0004 | TanStack Query for async storage                |
-| 0005 | Storybook for component isolation               |
-| 0006 | Playwright/Chromium for E2E testing              |
-| 0007 | XState v5 for state management                  |
-| 0008 | browser.storage.local as sole persistence        |
-| 0011 | Oxc (Oxlint + Oxfmt) for code quality            |
-| 0012 | Vitest browser mode (supersedes 0001 jsdom)      |
+|  ADR | Decision                                    |
+|------+---------------------------------------------|
+| 0001 | Vitest as test framework                    |
+| 0002 | TDD red-green-refactor methodology          |
+| 0003 | React 19 for UI layer                       |
+| 0004 | TanStack Query for async storage            |
+| 0005 | Storybook for component isolation           |
+| 0006 | Playwright/Chromium for E2E testing         |
+| 0007 | XState v5 for state management              |
+| 0008 | browser.storage.local as sole persistence   |
+| 0011 | Oxc (Oxlint + Oxfmt) for code quality       |
+| 0012 | Vitest browser mode (supersedes 0001 jsdom) |
 
-See [[file:docs/decisions/README.org][docs/decisions/README.org]] for the
-full log.
+See [[file:docs/decisions/README.org][docs/decisions/README.org]] for the full log.
 
 * Development Practices
 
@@ -146,14 +146,14 @@ This project follows strict development practices documented in
 
 * Progress
 
-| Phase | Name                 | Status   |
-|-------+----------------------+----------|
-|     1 | Tooling & Practice   | Complete |
-|     2 | Extension Scaffold   | Complete |
-|     3 | Library CRUD         | Planned  |
-|     4 | New Tab Display      | Planned  |
-|     5 | Queue                | Planned  |
-|     6 | Data Safety          | Planned  |
+| Phase | Name               | Status   |
+|-------+--------------------+----------|
+|     1 | Tooling & Practice | Complete |
+|     2 | Extension Scaffold | Complete |
+|     3 | Library CRUD       | Planned  |
+|     4 | New Tab Display    | Planned  |
+|     5 | Queue              | Planned  |
+|     6 | Data Safety        | Planned  |
 
 * License
 
