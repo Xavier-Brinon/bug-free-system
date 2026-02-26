@@ -19,6 +19,7 @@ export function BookCard({ book, onEdit, onDelete, onStatusChange }: BookCardPro
       {book.coverUrl && <img src={book.coverUrl} alt={book.title} />}
       <h3>{book.title}</h3>
       <p>{book.authors.join(", ")}</p>
+      {book.queueNote && <p className="queue-note">{book.queueNote}</p>}
       <div>
         <label htmlFor={`status-${book.id}`}>Status</label>
         <select

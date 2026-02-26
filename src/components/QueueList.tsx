@@ -26,7 +26,6 @@ export function QueueList({ books, onEdit, onDelete, onStatusChange, onEditNote 
             onDelete={onDelete}
             onStatusChange={onStatusChange}
           />
-          {book.queueNote && <p className="queue-note">{book.queueNote}</p>}
           <button type="button" onClick={() => onEditNote(book.id)}>
             Edit Note
           </button>

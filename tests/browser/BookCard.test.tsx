@@ -102,4 +102,24 @@ describe("BookCard", () => {
     await page.getByRole("combobox", { name: "Status" }).selectOptions("reading");
     expect(onStatusChange).toHaveBeenCalledWith("abc-123", "reading");
   });
+
+  it("displays queueNote text when the book has a queueNote", async () => {
+    const book = makeBook({ queueNote: "Recommended by a colleague" });
+    render(
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
+    );
+
+    await expect.element(page.getByText("Recommended by a colleague")).toBeVisible();
+  });
+
+  it("does not render note section when queueNote is undefined", async () => {
+    const book = makeBook({ queueNote: undefined });
+    render(
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
+    );
+
+    // No element with the queue-note class should exist
+    const noteElements = document.querySelectorAll(".queue-note");
+    expect(noteElements.length).toBe(0);
+  });
 });
