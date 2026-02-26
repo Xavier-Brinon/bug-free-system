@@ -106,6 +106,15 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [░░░░] →
    build; E2E smoke tests run in Chromium proxy via
    ~chromium.launchPersistentContext()~; manual Firefox acceptance testing
    required
+8. *webextension-polyfill crashes in Storybook / non-extension contexts* --
+   =webextension-polyfill= detects it is not running inside a browser
+   extension and throws at import time ("This script should only be loaded
+   in a browser extension"). Storybook renders stories in regular Chromium
+   pages, not extension contexts. Fix: alias =webextension-polyfill= to a
+   no-op mock via Vite =resolve.alias= in both =.storybook/main.ts=
+   (~viteFinal~) and the Storybook project in =vitest.config.ts=. The mock
+   lives at =.storybook/webextension-polyfill-mock.ts=. Stories override
+   ~queryFn~ in decorators so the mock is never actually called.
 
 ** File format conventions
 

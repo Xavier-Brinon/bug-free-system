@@ -383,6 +383,60 @@ Simple to write, catastrophic if the user imports the wrong file.
 
 Phase 6 (data safety).
 
+** Pitfall 11: webextension-polyfill crashes in Storybook and non-extension contexts
+:PROPERTIES:
+:CUSTOM_ID: pitfall-polyfill-storybook
+:END:
+
+*** What goes wrong
+
+Storybook stories that import any component touching =browser.storage.local=
+fail immediately with: "This script should only be loaded in a browser
+extension." The Vitest storybook test project also fails with the same error.
+No stories render; the entire Storybook suite is broken.
+
+*** Why it happens
+
+=webextension-polyfill= performs a runtime check at import time to verify it
+is running inside a browser extension context (checks for
+~chrome.runtime.id~ or equivalent). Storybook renders stories in a regular
+Chromium page -- not an extension popup or newtab override -- so the check
+fails and the module throws before any story code executes.
+
+The import chain is: Story → =App.tsx= → =storage.ts= →
+=import browser from "webextension-polyfill"= → crash.
+
+*** How to avoid
+
+Create a no-op mock of =webextension-polyfill= that provides stub
+implementations of the =browser.storage.local= API (=get=, =set=, =remove=,
+=clear=). Wire the mock via Vite's =resolve.alias= in *two* places:
+
+1. =.storybook/main.ts= (~viteFinal~) -- so =storybook dev= / =storybook build=
+   use the mock
+2. =vitest.config.ts= (storybook project's =resolve.alias=) -- so
+   =vitest run= with the storybook project uses the mock
+
+The mock file (=.storybook/webextension-polyfill-mock.ts=) exports a default
+object shaped like =browser= with async no-ops. Stories override ~queryFn~ in
+their decorators, so the mock storage functions are never actually called --
+they just prevent the import-time crash.
+
+Do *not* mock =webextension-polyfill= globally (e.g. in =vite.config.ts=) --
+the extension build needs the real polyfill.
+
+*** Warning signs
+
+- [ ] Storybook fails with "This script should only be loaded in a browser extension"
+- [ ] Vitest storybook project shows 0 tests with an import error
+- [ ] Any component that transitively imports =webextension-polyfill= cannot
+  be rendered in Storybook
+
+*** Phase to address
+
+Phase 2 (Storybook setup). Must be resolved when the first story imports a
+component that uses the browser extension API.
+
 * Technical debt patterns
 
 #+CAPTION: Shortcuts and their long-term costs
@@ -414,6 +468,7 @@ Phase 6 (data safety).
 | Import/export round-trip        | Phase 6 (Data Safety)    | Export from v1, import to fresh profile, all data matches |
 | New tab conflict (other exts)   | Phase 1 + Onboarding     | Install welcome page mentions conflict scenario |
 | Destructive import UX           | Phase 6 (Data Safety)    | Confirmation dialog shown; auto-backup created |
+| webextension-polyfill in Storybook | Phase 2 (Storybook)   | Stories render; vitest storybook project passes |
 
 * Sources
 
