@@ -52,10 +52,9 @@ export const Loading: Story = {
 };
 
 /**
- * Empty library state — the user has no books yet.
- * Shows "Add Book" button and empty state message.
+ * Dashboard with no books — shows EmptyHero prompt and QueueCount at 0.
  */
-export const Empty: Story = {
+export const DashboardEmpty: Story = {
   decorators: [
     (Story) => {
       const queryClient = createSeededClient(getDefaultData());
@@ -69,9 +68,10 @@ export const Empty: Story = {
 };
 
 /**
- * Library with books in different reading statuses.
+ * Dashboard with a currently-reading book in the hero section,
+ * plus books in other statuses. QueueCount shows want_to_read count.
  */
-export const WithBooks: Story = {
+export const DashboardReading: Story = {
   decorators: [
     (Story) => {
       const dataWithBooks: BookTabData = {
@@ -111,6 +111,57 @@ export const WithBooks: Story = {
         },
       };
       const queryClient = createSeededClient(dataWithBooks);
+      return (
+        <QueryClientProvider client={queryClient}>
+          <Story />
+        </QueryClientProvider>
+      );
+    },
+  ],
+};
+
+/**
+ * Dashboard with queued books but nothing currently being read.
+ * Shows EmptyHero + QueueCount with a non-zero count.
+ */
+export const DashboardWithQueue: Story = {
+  decorators: [
+    (Story) => {
+      const dataWithQueue: BookTabData = {
+        ...getDefaultData(),
+        books: {
+          "book-1": {
+            id: "book-1",
+            title: "Neuromancer",
+            authors: ["William Gibson"],
+            status: "want_to_read",
+            addedAt: "2026-02-01T12:00:00Z",
+            tags: [],
+            priority: 0,
+          },
+          "book-2": {
+            id: "book-2",
+            title: "Snow Crash",
+            authors: ["Neal Stephenson"],
+            status: "want_to_read",
+            addedAt: "2026-02-10T14:00:00Z",
+            tags: [],
+            priority: 0,
+          },
+          "book-3": {
+            id: "book-3",
+            title: "The Left Hand of Darkness",
+            authors: ["Ursula K. Le Guin"],
+            status: "read",
+            addedAt: "2025-12-01T09:00:00Z",
+            startedAt: "2025-12-05T08:00:00Z",
+            finishedAt: "2026-01-10T22:00:00Z",
+            tags: [],
+            priority: 0,
+          },
+        },
+      };
+      const queryClient = createSeededClient(dataWithQueue);
       return (
         <QueryClientProvider client={queryClient}>
           <Story />
