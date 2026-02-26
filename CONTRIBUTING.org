@@ -1,0 +1,164 @@
+#+title: Contributing to BookTab
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:2 num:nil ^:{}
+
+* Overview
+
+This document captures the developer practice rules for the BookTab project.
+These are *rules*, not suggestions. They are locked in for all phases of
+development. Every contributor (human or AI) must follow them.
+
+The rules exist to produce honest, maintainable code with a complete decision
+trail. They were established in Phase 1 (Tooling & Practice Foundation) before
+any feature code was written.
+
+* Rule 1: Mandatory Tidy-Up Before New Features (DEV-05)
+
+Every phase begins with a refactoring/cleanup pass before any new feature code
+is written. No exceptions.
+
+*Rationale:* Complexity accumulates. If cleanup is deferred to "later", later
+never comes. Starting each phase with a tidy-up commit ensures the codebase is
+clean before adding new complexity. This keeps technical debt from compounding
+across phases.
+
+*In practice:*
+- The first commit of every phase (after Phase 1) is a tidy-up commit
+- Review existing code for dead imports, unused variables, inconsistent naming,
+  or duplicated logic
+- Fix any linter warnings or type errors that have crept in
+- Only after the tidy-up commit is merged should new feature work begin
+
+* Rule 2: ADR Before Implementation (ADR-02, ADR-03)
+
+An Architecture Decision Record (ADR) is written *immediately before*
+implementing any architecturally significant decision, at whatever phase that
+decision arises. No decision is implemented without its ADR committed first.
+
+*Rationale:* This project is a learning exercise. The decision log must be
+complete and honest. Writing the ADR before implementation forces the developer
+to articulate the "why" before the "how" -- which often reveals better options
+or hidden trade-offs.
+
+*What counts as architecturally significant:*
+- Choosing a library or framework (e.g. Vitest, React, XState)
+- Defining a data format or schema (e.g. storage schema, export format)
+- Selecting a state management pattern (e.g. XState machines)
+- Establishing a developer workflow or coding convention (e.g. TDD)
+- Introducing infrastructure (e.g. Storybook, Playwright)
+
+*If a decision changes later:*
+- Write a *new* ADR that supersedes the previous one
+- Set the old ADR's status to "Superseded by NNNN"
+- The history is *never rewritten* -- only extended
+- This produces a complete, honest decision log for learning purposes
+
+*ADR format:* MADR 4.0 structure in org-mode format. See
+=docs/decisions/README.org= and =docs/decisions/0000-template.org=.
+
+* Rule 3: TDD Red-Green-Refactor Vertical Slicing (DEV-02, DEV-03)
+
+All feature code is written using TDD red-green-refactor vertical slicing:
+
+1. Write *one* failing test (RED)
+2. Run the test suite -- confirm it fails
+3. Write the *minimal* implementation to make it pass (GREEN)
+4. Run the test suite -- confirm it passes
+5. Refactor if needed (keep tests green)
+6. Repeat for the next behaviour
+
+*Rationale:* Tests written before implementation serve as design tools, not
+verification checklists. The red-green-refactor cycle keeps each test tightly
+coupled to one behaviour, ensures test and implementation stay in sync, and
+prevents the accumulation of untested code paths.
+
+*In practice:*
+- Never write multiple tests before writing any implementation
+- Each test targets one specific behaviour or edge case
+- If you are tempted to write "just one more test" before implementing, stop
+  and implement first
+
+* Rule 4: Public Interface Testing Only (DEV-04)
+
+Tests exercise the *public API* of a module -- what it exports, what it
+accepts, what it returns. No testing internal functions, no mocking internal
+implementation details.
+
+*Rationale:* Tests coupled to internal implementation break on every refactor,
+even when the external behaviour is unchanged. Public-interface tests survive
+refactoring and verify what actually matters: the contract the module offers
+to its consumers.
+
+*In practice:*
+- If a function is not exported, it should not be tested directly
+- Do not import private/internal functions in test files
+- Do not mock internal implementation details (e.g. private helper methods)
+- Test through the public API: call the exported function, assert on the return
+  value or observable side effect
+- If an internal function needs testing, it may need to be extracted into its
+  own module with its own public API
+
+* Rule 5: No Bulk Test Writing (DEV-03)
+
+Tests are *not* written all at once after feature code is complete. Each test
+is written before the code that makes it pass (see Rule 3).
+
+*Rationale:* Tests written after implementation tend to verify what the code
+already does, not what it *should* do. They miss edge cases the developer
+didn't think about during implementation, and they are often shaped by
+knowledge of the implementation rather than the specification. This produces
+tests that provide false confidence.
+
+*In practice:*
+- Never open a test file and write 5 tests in a row before any implementation
+- If you find yourself writing "test 1, test 2, test 3" before touching the
+  source file, you are violating this rule
+- One test, one implementation pass, then the next test
+
+* Rule 6: Mermaid Diagrams in ADRs
+
+When an ADR describes a flow, state transition, dependency graph, or data
+structure, include a Mermaid diagram using ob-mermaid syntax:
+
+#+begin_example
+,#+begin_src mermaid :file ./images/NNNN-short-title.svg :theme neutral
+graph TD
+    A[Decision] --> B[Consequence]
+,#+end_src
+,#+RESULTS:
+[[file:./images/NNNN-short-title.svg]]
+#+end_example
+
+*Rationale:* A diagram can communicate a flow or dependency graph in seconds
+that would take paragraphs of prose. Diagrams as code (Mermaid) are
+maintainable and diffable, unlike binary image files.
+
+*Key rules:*
+- The =:file= header argument is *required* for ob-mermaid to execute
+  (=C-c C-c= in Emacs)
+- Use SVG format (=.svg=)
+- Output files go in =docs/decisions/images/=
+- Generated SVG files are committed to git alongside the source block
+- Diagrams are optional but strongly encouraged when they reduce reading time
+
+* Rule 7: File Format Exception -- GSD Workflow Artefacts
+
+All project documentation is written in org-mode (=.org= files). This includes
+requirements, roadmaps, state files, ADRs, and contributing guides.
+
+*The one exception:* =.planning/phases/**/*-PLAN.md= and =*-SUMMARY.md= files.
+These must keep the =.md= extension because the GSD tooling (=gsd-tools.cjs=)
+hardcodes ~endsWith('-PLAN.md')~ and ~endsWith('-SUMMARY.md')~ when discovering
+plans and tracking progress. Renaming them to =.org= would silently break plan
+discovery, wave execution, and progress tracking.
+
+*Rationale:* These files are GSD tooling artefacts, not project documentation.
+Their content uses YAML frontmatter + XML task blocks (the GSD format). They
+are consumed by automation, not by humans reading documentation. Do not convert
+them to org-mode.
+
+*In summary:*
+- All project docs: org-mode (=.org=)
+- GSD plan/summary files: markdown (=.md=) -- required by tooling

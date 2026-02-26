@@ -1,0 +1,63 @@
+#+title: [short title of solved problem and solution]
+#+author: BookTab
+#+date: [YYYY-MM-DD]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+[Proposed | Accepted | Deprecated | Superseded by NNNN]
+
+* Context and Problem Statement
+
+[Describe the context and problem. Why is this decision needed?]
+
+* Decision Drivers
+
+- [driver 1, e.g. performance, simplicity, consistency]
+- [driver 2]
+
+* Considered Options
+
+- [Option 1]
+- [Option 2]
+
+* Decision Outcome
+
+Chosen option: "[option]", because [justification].
+
+** Positive Consequences
+
+- [e.g. proven solution, well-known]
+
+** Negative Consequences / Trade-offs
+
+- [e.g. more dependencies]
+
+* Pros and Cons of the Options
+
+** [Option 1]
+
+- Good, because [argument]
+- Bad, because [argument]
+
+** [Option 2]
+
+- Good, because [argument]
+- Bad, because [argument]
+
+* Diagram (optional)
+
+When this decision involves a flow, state transition, dependency graph, or
+data structure, include a Mermaid diagram below. The =:file= header argument
+is required for ob-mermaid to execute (=C-c C-c=). Use SVG format. Output
+is committed alongside the source block.
+
+#+begin_src mermaid :file ./images/NNNN-short-title.svg :theme neutral
+%% Replace with your diagram. Examples:
+%% graph TD, sequenceDiagram, flowchart LR, stateDiagram-v2
+graph TD
+    A[Decision] --> B[Consequence]
+#+end_src
+#+RESULTS:
+[[file:./images/NNNN-short-title.svg]]

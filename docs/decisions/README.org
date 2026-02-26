@@ -1,0 +1,117 @@
+#+title: Architecture Decision Records
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* What Are ADRs?
+
+Architecture Decision Records (ADRs) capture the key decisions made during
+the development of this project, along with the context and consequences of
+each choice. They serve as a permanent, honest log of *why* the project is
+built the way it is.
+
+This project follows the [[https://adr.github.io/madr/][MADR 4.0]] structure, adapted to org-mode format.
+
+* File Naming Convention
+
+ADR files live in =docs/decisions/= and follow this naming pattern:
+
+#+begin_example
+NNNN-short-title.org
+#+end_example
+
+- =NNNN= is a four-digit zero-padded sequence number (0001, 0002, ...)
+- =short-title= is a kebab-case summary of the decision
+- File format is always =.org= (org-mode)
+
+Examples:
+- =0001-vitest.org=
+- =0002-tdd.org=
+- =0003-react.org=
+
+The template file =0000-template.org= is not an ADR itself -- it is the
+blank form copied when writing a new ADR.
+
+* When to Write an ADR
+
+Write an ADR *before* implementing any architecturally significant decision.
+This is a hard rule, not a guideline (see ADR-02 and =CONTRIBUTING.org=).
+
+A decision is architecturally significant if it involves:
+
+- Choosing a library or framework (e.g. Vitest, React, XState)
+- Defining a data format or schema (e.g. storage schema, export format)
+- Selecting a state management pattern (e.g. XState machines)
+- Establishing a developer workflow or coding convention (e.g. TDD)
+- Introducing infrastructure (e.g. Storybook, Playwright)
+
+When in doubt, write an ADR. A short ADR that turns out to be unnecessary is
+far less costly than an undocumented decision that confuses a future reader.
+
+* How to Write a New ADR
+
+1. Copy =0000-template.org= to a new file with the next sequence number:
+
+   #+begin_example
+   cp docs/decisions/0000-template.org docs/decisions/NNNN-short-title.org
+   #+end_example
+
+2. Fill in every section of the template. Leave no placeholder text.
+
+3. Set the =Status= to =Proposed= or =Accepted= (most decisions in this
+   project go straight to =Accepted= since there is a single developer).
+
+4. If the decision involves a flow, state transition, dependency graph, or
+   data structure, include a Mermaid diagram (see below).
+
+5. Commit the ADR before (or alongside) the implementation commit.
+
+* Mermaid Diagram Convention
+
+When an ADR involves a flow, state transition, dependency graph, or data
+structure, include a Mermaid diagram using ob-mermaid syntax:
+
+#+begin_example
+,#+begin_src mermaid :file ./images/NNNN-short-title.svg :theme neutral
+graph TD
+    A[Decision] --> B[Consequence]
+,#+end_src
+,#+RESULTS:
+[[file:./images/NNNN-short-title.svg]]
+#+end_example
+
+Key rules:
+- The =:file= header argument is *required* for ob-mermaid to execute
+  (=C-c C-c= in Emacs)
+- Use SVG format (=.svg=)
+- Output files go in =docs/decisions/images/=
+- Generated SVG files are committed to git alongside the source block
+- Diagrams are optional but strongly encouraged when they reduce reading time
+
+* Superseding Decisions
+
+If a decision is later revised, do *not* edit the original ADR. Instead:
+
+1. Write a new ADR with the revised decision
+2. Set the old ADR's status to =Superseded by NNNN=
+3. The history is never rewritten -- only extended
+
+This produces a complete, honest decision log.
+
+* ADR Status Values
+
+- =Proposed= -- under discussion (rare in a single-developer project)
+- =Accepted= -- decision is in effect
+- =Deprecated= -- decision is no longer relevant
+- =Superseded by NNNN= -- replaced by a newer ADR
+
+* Current ADRs
+
+| ADR  | Decision                           | Status   |
+|------+------------------------------------+----------|
+| 0001 | Vitest as test framework           | Accepted |
+| 0002 | TDD red-green-refactor methodology | Accepted |
+| 0003 | React 19 as UI rendering layer     | Accepted |
+| 0004 | TanStack Query for async storage   | Accepted |
+| 0005 | Storybook for component isolation  | Accepted |
