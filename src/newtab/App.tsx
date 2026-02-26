@@ -151,8 +151,9 @@ export function App() {
 
   // ready.editing
   if (state.matches({ ready: "editing" })) {
-    const editingBook =
-      state.context.editingBookId ? state.context.data?.books[state.context.editingBookId] : null;
+    const editingBook = state.context.editingBookId
+      ? state.context.data?.books[state.context.editingBookId]
+      : null;
 
     return (
       <div className="app">
