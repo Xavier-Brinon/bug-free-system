@@ -256,7 +256,11 @@ QUEUE-01, QUEUE-02
 
 *** Plans
 
-TBD
+3 plans, 2 waves:
+
+- [ ] 05-01-PLAN.md — Tidy-up + QueueList component (TDD, browser tests) [Wave 1]
+- [ ] 05-02-PLAN.md — QueueNoteEditor component + BookCard queueNote display (TDD, browser tests) [Wave 1]
+- [ ] 05-03-PLAN.md — Wire queue into App.tsx + appMachine states + Storybook stories + Playwright E2E [Wave 2]
 
 ** Phase 6: Data Safety
 :PROPERTIES:
