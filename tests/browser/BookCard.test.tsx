@@ -21,12 +21,7 @@ describe("BookCard", () => {
   it("renders the book title", async () => {
     const book = makeBook({ title: "Dune" });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
     );
 
     await expect.element(page.getByText("Dune")).toBeVisible();
@@ -35,12 +30,7 @@ describe("BookCard", () => {
   it("renders the author(s) joined by comma", async () => {
     const book = makeBook({ authors: ["Frank Herbert", "Brian Herbert"] });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
     );
 
     await expect.element(page.getByText("Frank Herbert, Brian Herbert")).toBeVisible();
@@ -49,28 +39,18 @@ describe("BookCard", () => {
   it("renders a status select showing the current status", async () => {
     const book = makeBook({ status: "want_to_read" });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
     );
 
-    await expect.element(page.getByRole("combobox", { name: "Status" })).toHaveValue(
-      "want_to_read",
-    );
+    await expect
+      .element(page.getByRole("combobox", { name: "Status" }))
+      .toHaveValue("want_to_read");
   });
 
   it("renders cover image when coverUrl is provided", async () => {
     const book = makeBook({ coverUrl: "https://example.com/cover.jpg" });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
     );
 
     const img = page.getByRole("img", { name: "Dune" });
@@ -81,12 +61,7 @@ describe("BookCard", () => {
   it("does not render cover image when coverUrl is absent", async () => {
     const book = makeBook({ coverUrl: undefined });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={() => {}} onStatusChange={() => {}} />,
     );
 
     await expect.element(page.getByRole("img")).not.toBeInTheDocument();
@@ -95,14 +70,7 @@ describe("BookCard", () => {
   it("clicking Edit button calls onEdit with the book's id", async () => {
     const onEdit = vi.fn();
     const book = makeBook({ id: "abc-123" });
-    render(
-      <BookCard
-        book={book}
-        onEdit={onEdit}
-        onDelete={() => {}}
-        onStatusChange={() => {}}
-      />,
-    );
+    render(<BookCard book={book} onEdit={onEdit} onDelete={() => {}} onStatusChange={() => {}} />);
 
     await page.getByRole("button", { name: "Edit" }).click();
     expect(onEdit).toHaveBeenCalledWith("abc-123");
@@ -112,12 +80,7 @@ describe("BookCard", () => {
     const onDelete = vi.fn();
     const book = makeBook({ id: "abc-123" });
     render(
-      <BookCard
-        book={book}
-        onEdit={() => {}}
-        onDelete={onDelete}
-        onStatusChange={() => {}}
-      />,
+      <BookCard book={book} onEdit={() => {}} onDelete={onDelete} onStatusChange={() => {}} />,
     );
 
     await page.getByRole("button", { name: "Delete" }).click();

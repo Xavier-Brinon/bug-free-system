@@ -74,9 +74,9 @@ describe("BookForm", () => {
 
     await expect.element(page.getByLabelText("Title")).toHaveValue("Dune");
     await expect.element(page.getByLabelText("Author(s)")).toHaveValue("Frank Herbert");
-    await expect.element(page.getByLabelText("Cover URL")).toHaveValue(
-      "https://example.com/cover.jpg",
-    );
+    await expect
+      .element(page.getByLabelText("Cover URL"))
+      .toHaveValue("https://example.com/cover.jpg");
   });
 
   it("cancel button calls onCancel", async () => {
