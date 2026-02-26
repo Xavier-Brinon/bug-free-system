@@ -12,7 +12,8 @@
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
-  =vitest-browser-react= + Storybook + Playwright/Chromium
+  =vitest-browser-react= + Storybook + Playwright/Chromium +
+  Oxlint + Oxfmt
 - *Target* :: React SPA delivered as a Firefox extension (Manifest V3) — the
   extension is a thin shell; the app is a standard React SPA in the new tab page
 - *ADRs* :: =docs/decisions/= (MADR 4.0 structure, org-mode format)
@@ -25,8 +26,8 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 | Field            | Value                              |
 |------------------+------------------------------------|
 | Current Phase    | Phase 2: Extension Scaffold        |
-| Current Plan     | 02-01 (planned, not started)       |
-| Phase Status     | Planned (5 plans, 4 waves)         |
+| Current Plan     | 02-01 (executing)                  |
+| Phase Status     | In progress (5 plans, 4 waves)     |
 | Overall Progress | 1/6 phases complete                |
 
 #+BEGIN_EXAMPLE
@@ -54,7 +55,7 @@ Phase 1 [████] → Phase 2 [░░░░] → Phase 3 [░░░░] →
 | Phases complete  | 1 / 6  |
 | Requirements met | 9 / 25 |
 | Plans executed   | 3      |
-| ADRs written     | 6      |
+| ADRs written     | 10     |
 | Tests passing    | 0      |
 
 * Accumulated Context
@@ -154,11 +155,12 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 | 0003   | React 19 as UI rendering layer     | 1             | Written |
 | 0004   | TanStack Query for async storage   | 1             | Written |
 | 0005   | Storybook for component isolation  | 1             | Written |
-| 0006   | Playwright / Chromium for E2E      | 2             | Pending |
-| 0007   | XState v5 state management         | 2             | Pending |
-| 0008   | browser.storage.local only         | 2             | Pending |
+| 0006   | Playwright / Chromium for E2E      | 2             | Written |
+| 0007   | XState v5 state management         | 2             | Written |
+| 0008   | browser.storage.local only         | 2             | Written |
 | 0009   | Open Library API                   | 3             | Pending |
 | 0010   | Versioned JSON export schema       | 6             | Pending |
+| 0011   | Oxc (Oxlint + Oxfmt) for linting   | 2             | Written |
 | 0012   | Vitest browser mode (supersedes 0001) | 1          | Written |
 
 ** Open questions
@@ -179,9 +181,10 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - [X] Write ADR-0003 (React 19) -- Phase 1 (Plan 01-03)
 - [X] Write ADR-0004 (TanStack Query) -- Phase 1 (Plan 01-03)
 - [X] Write ADR-0005 (Storybook) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0006 (Playwright / Chromium) -- Phase 2, before E2E scaffold
-- [ ] Write ADR-0007 (XState v5) -- Phase 2, before machine code
-- [ ] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
+- [X] Write ADR-0006 (Playwright / Chromium) -- Phase 2, before E2E scaffold
+- [X] Write ADR-0007 (XState v5) -- Phase 2, before machine code
+- [X] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
+- [X] Write ADR-0011 (Oxc: Oxlint + Oxfmt) -- Phase 2, before any code
 - [ ] Write ADR-0009 (Open Library API) -- Phase 3, before search feature
 - [ ] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
 - [ ] Scaffold extension with =vite-plugin-web-extension= -- Phase 2

@@ -1,0 +1,160 @@
+#+title: Use browser.storage.local as sole persistence layer
+#+author: BookTab
+#+date: [2026-02-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab needs persistent storage that survives browser restarts and privacy
+clears. The extension is local-only with no backend server. Data must persist
+when the user closes Firefox and reopens it, and critically must *not* be
+wiped when the user clears browsing data (cookies, cache, history).
+
+The Web Storage API (=window.localStorage=) is the most familiar option for
+web developers, but MDN explicitly warns: "Firefox clears data stored by
+extensions using the localStorage API in various scenarios where users clear
+their browsing history and data for privacy reasons."
+
+* Decision Drivers
+
+- Data must survive browser data clears (history, cookies, cache wipes)
+- No backend server -- all data is local to the browser
+- Async API acceptable (TanStack Query handles loading/error/success states)
+- Single root key pattern enables atomic reads/writes and easy export/import
+- Schema versioning from day one enables safe migrations in future updates
+
+* Considered Options
+
+- =browser.storage.local= (WebExtension storage API)
+- =window.localStorage= (Web Storage API)
+- IndexedDB (direct access)
+
+* Decision Outcome
+
+Chosen option: "=browser.storage.local=", because it is the only storage API
+that survives Firefox privacy clears. The entire application state is stored
+under a single root key (=booktab_data=) as a JSON object with
+=schemaVersion: 1=.
+
+Key architectural decisions:
+
+1. *Single root key pattern:* All data stored under ='booktab_data'= →
+   ~{ schemaVersion, books, settings }~
+   - Pros: atomic reads/writes, easy export/import, easy schema migration
+   - Cons: full re-serialization on every change (acceptable for <500 books)
+
+2. *Versioned schema:* =schemaVersion: 1= embedded from day one. A migration
+   layer is required before any schema change ships. Import validation uses
+   Zod schemas.
+
+3. *TanStack Query wrapper:* All storage access goes through TanStack Query
+   hooks (=useBookTabData=, =useAddBook=, etc.). Loading/error/success states
+   are handled by the query layer. Cache invalidated via
+   =browser.storage.onChanged= listener.
+
+4. *Centralized access:* =storage.ts= is the only module that calls
+   =browser.storage.local= -- no scattered storage calls from UI code.
+
+5. *Error handling:* All =storage.local.set()= calls wrapped in try/catch for
+   quota errors. Cover images stored as URLs (never base64) to avoid quota
+   issues.
+
+** Positive Consequences
+
+- Data survives all Firefox privacy clear scenarios
+- Atomic reads/writes via single root key
+- Export/import is trivial (read/write one key)
+- Schema migration is straightforward (read, migrate, write)
+- TanStack Query provides consistent loading/error/success states across all
+  components (no ad-hoc loading flags)
+- =browser.storage.onChanged= enables multi-tab sync for free
+
+** Negative Consequences / Trade-offs
+
+- Async API adds complexity compared to synchronous =localStorage=
+- Full object re-serialization on every change (acceptable for <500 books,
+  may need optimization at 500--2000 books)
+- Requires ="storage"= and potentially ="unlimitedStorage"= permissions in
+  manifest
+- =unlimitedStorage= may trigger a user-facing warning in Firefox (evaluate
+  before AMO submission)
+
+* Pros and Cons of the Options
+
+** browser.storage.local
+
+- Good, because survives Firefox privacy clears (MDN confirmed)
+- Good, because designed specifically for extensions
+- Good, because =onChanged= listener enables multi-tab sync
+- Good, because =unlimitedStorage= permission available for large libraries
+- Bad, because async API requires await/Promise handling everywhere
+- Bad, because no querying -- must read entire object and filter in JavaScript
+
+** window.localStorage
+
+- Good, because synchronous API (simpler code)
+- Good, because familiar to all web developers
+- Good, because no permissions needed
+- Bad, because *data wiped when user clears browsing data* (MDN warning)
+- Bad, because synchronous calls can block the main thread with large data
+- Bad, because 5--10MB quota limit (no =unlimitedStorage= equivalent)
+- Bad, because no =onChanged= equivalent for multi-tab sync
+
+** IndexedDB (direct access)
+
+- Good, because structured database with indexes and queries
+- Good, because large storage capacity
+- Good, because async API with good performance
+- Bad, because *also wiped on privacy clear* in Firefox (same as localStorage)
+- Bad, because complex API (cursors, transactions, versioning)
+- Bad, because overkill for BookTab's simple key-value data shape
+- Bad, because =browser.storage.local= is backed by IndexedDB anyway
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0008-storage-data-flow.svg :theme neutral
+graph LR
+    subgraph "React Components"
+        UI["Component\n(useBookTabData)"]
+    end
+
+    subgraph "TanStack Query"
+        QC["QueryClient"]
+        QC -->|"queryFn"| LOAD
+        QC -->|"mutationFn"| SAVE
+    end
+
+    subgraph "storage.ts"
+        LOAD["loadBookTabData()"]
+        SAVE["saveBookTabData()"]
+    end
+
+    subgraph "Browser API"
+        BSL["browser.storage.local"]
+        BSL -->|"onChanged"| QC
+    end
+
+    UI -->|"useQuery / useMutation"| QC
+    LOAD -->|"get('booktab_data')"| BSL
+    SAVE -->|"set({ booktab_data })"| BSL
+
+    subgraph "Data Shape"
+        DS["booktab_data:\n{ schemaVersion: 1,\n  books: Record&lt;id, BookRecord&gt;,\n  settings: UserSettings }"]
+    end
+
+    BSL --- DS
+
+    style UI fill:#e3f2fd
+    style QC fill:#e8f5e9
+    style LOAD fill:#fff3e0
+    style SAVE fill:#fff3e0
+    style BSL fill:#fce4ec
+    style DS fill:#f3e5f5
+#+end_src
+#+RESULTS:
+[[file:./images/0008-storage-data-flow.svg]]
