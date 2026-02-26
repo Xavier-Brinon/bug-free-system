@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 1 -- Tooling & Practice Foundation
+- *Current Focus* :: Phase 2 -- Extension Scaffold
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest (jsdom) + =@testing-library/react= +
@@ -23,14 +23,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 1: Tooling & Practice        |
+| Current Phase    | Phase 2: Extension Scaffold        |
 | Current Plan     | None (not started)                 |
 | Phase Status     | Not started                        |
-| Overall Progress | 0/6 phases complete                |
+| Overall Progress | 1/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
-Phase 1 [░░░░] → Phase 2 [░░░░] → Phase 3 [░░░░] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████░░░░░░░░░░░░░░░░] 17%
+Phase 1 [████] → Phase 2 [░░░░] → Phase 3 [░░░░] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -38,7 +38,7 @@ Phase 1 [░░░░] → Phase 2 [░░░░] → Phase 3 [░░░░] →
 #+CAPTION: Phase summary
 | Phase | Name                        | Requirements            | Status      |
 |-------+-----------------------------+-------------------------+-------------|
-|     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Not started |
+|     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Complete    |
 |     2 | Extension Scaffold          | CORE-01--04             | Not started |
 |     3 | Library CRUD                | LIB-01--04              | Not started |
 |     4 | New Tab Display             | DISP-01--03             | Not started |
@@ -50,10 +50,10 @@ Phase 1 [░░░░] → Phase 2 [░░░░] → Phase 3 [░░░░] →
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 0 / 6  |
-| Requirements met | 0 / 25 |
-| Plans executed   | 0      |
-| ADRs written     | 0      |
+| Phases complete  | 1 / 6  |
+| Requirements met | 9 / 25 |
+| Plans executed   | 3      |
+| ADRs written     | 5      |
 | Tests passing    | 0      |
 
 * Accumulated Context
@@ -146,11 +146,11 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 
 | ADR    | Decision                           | Phase written | Status  |
 |--------+------------------------------------+---------------+---------|
-| 0001   | Vitest as test framework           | 1             | Pending |
-| 0002   | TDD red-green-refactor methodology | 1             | Pending |
-| 0003   | React 19 as UI rendering layer     | 1             | Pending |
-| 0004   | TanStack Query for async storage   | 1             | Pending |
-| 0005   | Storybook for component isolation  | 1             | Pending |
+| 0001   | Vitest as test framework           | 1             | Written |
+| 0002   | TDD red-green-refactor methodology | 1             | Written |
+| 0003   | React 19 as UI rendering layer     | 1             | Written |
+| 0004   | TanStack Query for async storage   | 1             | Written |
+| 0005   | Storybook for component isolation  | 1             | Written |
 | 0006   | Playwright / Chromium for E2E      | 2             | Pending |
 | 0007   | XState v5 state management         | 2             | Pending |
 | 0008   | browser.storage.local only         | 2             | Pending |
@@ -166,15 +166,15 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 
 ** Todos
 
-- [ ] Initialize =docs/decisions/= with MADR 4.0 template (org-mode) -- Phase 1 (Plan 01-01)
-- [ ] Write CONTRIBUTING.org with locked practice rules -- Phase 1 (Plan 01-01)
-- [ ] Install Vitest + React + TanStack + testing-library -- Phase 1 (Plan 01-02)
-- [ ] Configure jsdom environment in vitest.config.ts -- Phase 1 (Plan 01-02)
-- [ ] Write ADR-0001 (Vitest) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0002 (TDD) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0003 (React 19) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0004 (TanStack Query) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0005 (Storybook) -- Phase 1 (Plan 01-03)
+- [X] Initialize =docs/decisions/= with MADR 4.0 template (org-mode) -- Phase 1 (Plan 01-01)
+- [X] Write CONTRIBUTING.org with locked practice rules -- Phase 1 (Plan 01-01)
+- [X] Install Vitest + React + TanStack + testing-library -- Phase 1 (Plan 01-02)
+- [X] Configure jsdom environment in vitest.config.ts -- Phase 1 (Plan 01-02)
+- [X] Write ADR-0001 (Vitest) -- Phase 1 (Plan 01-03)
+- [X] Write ADR-0002 (TDD) -- Phase 1 (Plan 01-03)
+- [X] Write ADR-0003 (React 19) -- Phase 1 (Plan 01-03)
+- [X] Write ADR-0004 (TanStack Query) -- Phase 1 (Plan 01-03)
+- [X] Write ADR-0005 (Storybook) -- Phase 1 (Plan 01-03)
 - [ ] Write ADR-0006 (Playwright / Chromium) -- Phase 2, before E2E scaffold
 - [ ] Write ADR-0007 (XState v5) -- Phase 2, before machine code
 - [ ] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
@@ -189,18 +189,19 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Planning docs updated to reflect React
-  19 + TanStack Query + Storybook + Playwright stack decisions; Phase 1 plans
-  revised (01-02 and 01-03 updated); all changes committed
-- *Next action* :: Execute Phase 1 -- run plans 01-01, 01-02, 01-03 in order
-  (or waves 1 then 2); start with a fresh context window (~~/clear~~)
-- *Context for next session* :: Phase 1 is pure setup -- no feature code.
-  Focus: ADR infrastructure (01-01, wave 1), Vitest + React + TanStack
-  install with jsdom (01-02, wave 1), then five ADRs 0001--0005 (01-03,
-  wave 2). ADRs 0006--0010 are written at the start of their respective
-  phases, immediately before the relevant implementation. The executor
-  should read the plan files and follow them exactly.
+- *Last action* :: [2026-02-26 Thu] -- Phase 1 executed: all 3 plans complete
+  (01-01, 01-02, 01-03). ADR infrastructure created, Vitest + React + TanStack
+  configured, 5 ADRs written (0001--0005). =npm run test= passes on empty suite.
+- *Next action* :: Plan and execute Phase 2 -- Extension Scaffold. Start with
+  ADR-0006 (Playwright), ADR-0007 (XState), ADR-0008 (storage). Then scaffold
+  the Firefox extension with =vite-plugin-web-extension=.
+- *Context for next session* :: Phase 1 is complete -- all tooling and practice
+  docs are in place. Phase 2 introduces the actual extension scaffold: manifest,
+  Vite build, XState machines, storage layer, Storybook setup, and Playwright
+  smoke tests. Three ADRs (0006--0008) must be written before their respective
+  implementations. The tidy-up step should be minimal since no feature code
+  exists yet.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
-/Updated: [2026-02-26 Thu] -- React 19 + TanStack Query stack confirmed; ADR numbering locked; Phase 1 plans revised/
+/Updated: [2026-02-26 Thu] -- Phase 1 complete: 3 plans executed, 5 ADRs written, Vitest + React configured/

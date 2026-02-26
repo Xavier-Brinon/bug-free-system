@@ -16,7 +16,7 @@
 
 * Phases
 
-- [ ] *Phase 1: Tooling & Practice Foundation* -- ADR infrastructure, Vitest
+- [X] *Phase 1: Tooling & Practice Foundation* -- ADR infrastructure, Vitest
   + TDD methodology locked in, React/TanStack/Storybook decisions recorded
   before any feature code
 - [ ] *Phase 2: Extension Scaffold* -- Working Firefox extension shell with
@@ -95,9 +95,9 @@ ADR-01, ADR-02, ADR-03, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06
 5 plans across 2 waves.
 
 Plans:
-- [ ] 01-01-PLAN.md — ADR infrastructure (docs/decisions/ + MADR template) + CONTRIBUTING.org
-- [ ] 01-02-PLAN.md — Vitest + React + TanStack configuration (package.json + vitest.config.ts + tsconfig.json)
-- [ ] 01-03-PLAN.md — ADR-0001 (Vitest) + ADR-0002 (TDD) + ADR-0003 (React) + ADR-0004 (TanStack Query) + ADR-0005 (Storybook)
+- [X] 01-01-PLAN.md — ADR infrastructure (docs/decisions/ + MADR template) + CONTRIBUTING.org
+- [X] 01-02-PLAN.md — Vitest + React + TanStack configuration (package.json + vitest.config.ts + tsconfig.json)
+- [X] 01-03-PLAN.md — ADR-0001 (Vitest) + ADR-0002 (TDD) + ADR-0003 (React) + ADR-0004 (TanStack Query) + ADR-0005 (Storybook)
 
 ** Phase 2: Extension Scaffold
 :PROPERTIES:
@@ -294,7 +294,7 @@ TBD
 #+NAME: tab:progress
 | Phase | Name                        | Plans Complete | Status      | Completed |
 |-------+-----------------------------+----------------+-------------+-----------|
-|     1 | Tooling & Practice          | 0/3            | Not started | --        |
+|     1 | Tooling & Practice          | 3/3            | Complete    | [2026-02-26 Thu] |
 |     2 | Extension Scaffold          | 0/?            | Not started | --        |
 |     3 | Library CRUD                | 0/?            | Not started | --        |
 |     4 | New Tab Display             | 0/?            | Not started | --        |
