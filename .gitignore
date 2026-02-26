@@ -22,3 +22,11 @@ coverage/
 
 # web-ext
 web-ext-artifacts/
+
+# Storybook
+*storybook.log
+storybook-static/
+
+# Playwright
+test-results/
+playwright-report/
