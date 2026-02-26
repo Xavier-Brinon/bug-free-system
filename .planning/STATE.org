@@ -26,13 +26,13 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 | Field            | Value                              |
 |------------------+------------------------------------|
 | Current Phase    | Phase 2: Extension Scaffold        |
-| Current Plan     | 02-01 (executing)                  |
-| Phase Status     | In progress (5 plans, 4 waves)     |
-| Overall Progress | 1/6 phases complete                |
+| Current Plan     | 02-05 (complete)                   |
+| Phase Status     | Complete (5 plans, 4 waves)        |
+| Overall Progress | 2/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████░░░░░░░░░░░░░░░░] 17%
-Phase 1 [████] → Phase 2 [░░░░] → Phase 3 [░░░░] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████████░░░░░░░░░░░░] 33%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [░░░░] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -41,7 +41,7 @@ Phase 1 [████] → Phase 2 [░░░░] → Phase 3 [░░░░] →
 | Phase | Name                        | Requirements            | Status      |
 |-------+-----------------------------+-------------------------+-------------|
 |     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Complete    |
-|     2 | Extension Scaffold          | CORE-01--04             | Not started |
+|     2 | Extension Scaffold          | CORE-01--04             | Complete    |
 |     3 | Library CRUD                | LIB-01--04              | Not started |
 |     4 | New Tab Display             | DISP-01--03             | Not started |
 |     5 | Queue                       | QUEUE-01--02            | Not started |
@@ -52,11 +52,11 @@ Phase 1 [████] → Phase 2 [░░░░] → Phase 3 [░░░░] →
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 1 / 6  |
-| Requirements met | 9 / 25 |
-| Plans executed   | 3      |
+| Phases complete  | 2 / 6  |
+| Requirements met | 13 / 25 |
+| Plans executed   | 8      |
 | ADRs written     | 10     |
-| Tests passing    | 0      |
+| Tests passing    | 23     |
 
 * Accumulated Context
 
@@ -187,8 +187,12 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - [X] Write ADR-0011 (Oxc: Oxlint + Oxfmt) -- Phase 2, before any code
 - [ ] Write ADR-0009 (Open Library API) -- Phase 3, before search feature
 - [ ] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
-- [ ] Scaffold extension with =vite-plugin-web-extension= -- Phase 2
-- [ ] Lock data schema in =schema.ts= before any feature code -- Phase 2
+- [X] Scaffold extension with =vite-plugin-web-extension= -- Phase 2 (Plan 02-02)
+- [X] Lock data schema in =schema.ts= before any feature code -- Phase 2 (Plan 02-03)
+- [X] Install Oxlint + Oxfmt for code quality -- Phase 2 (Plan 02-01)
+- [X] Create XState app machine (loading/ready/error) -- Phase 2 (Plan 02-04)
+- [X] Set up Storybook with App stories -- Phase 2 (Plan 02-05)
+- [X] Set up Playwright E2E smoke test -- Phase 2 (Plan 02-05)
 
 ** Blockers
 
@@ -196,16 +200,21 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 2 planned: 5 plans across 4 waves.
-  Architecture clarified (React SPA in extension shell). ADR-0012 written
-  (Vitest browser mode supersedes ADR-0001 jsdom).
-- *Next action* :: Execute Phase 2 starting with Plan 02-01 (tidy-up + 3 ADRs).
-- *Context for next session* :: Phase 2 plans are written in
-  =.planning/phases/02-extension-scaffold/=. Execute in wave order: 02-01
-  (Wave 1: tidy-up + ADRs), then 02-02 + 02-03 (Wave 2: scaffold + schema),
-  then 02-04 (Wave 3: XState), then 02-05 (Wave 4: Storybook + Playwright).
-  Plans 02-03 and 02-04 require TDD. The tidy-up in 02-01 should be trivial.
+- *Last action* :: [2026-02-26 Thu] -- Phase 2 complete: 5 plans executed across
+  4 waves. Extension scaffold built with manifest, Vite build, React app, data
+  schema (schemaVersion: 1), storage layer (TanStack Query), XState app machine
+  (loading/ready/error), Storybook stories, and Playwright E2E smoke test.
+  4 ADRs written (0006, 0007, 0008, 0011). Oxlint + Oxfmt installed for code
+  quality. 23 unit tests passing. E2E smoke test passing.
+- *Next action* :: Merge =phase-02/extension-scaffold= to =main=, then plan
+  and execute Phase 3 (Library CRUD).
+- *Context for next session* :: Phase 2 is complete on the
+  =phase-02/extension-scaffold= branch. All scripts work: =test=, =build=,
+  =e2e=, =lint=, =fmt:check=, =lint:ext=, =storybook=. The extension loads
+  in Chromium via Playwright and renders "BookTab". Phase 3 (Library CRUD)
+  adds book add/edit/delete functionality with the existing schema and storage
+  layer. Plans for Phase 3 need to be created.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
-/Updated: [2026-02-26 Thu] -- Phase 1 complete: 3 plans executed, 5 ADRs written, Vitest + React configured/
+/Updated: [2026-02-26 Thu] -- Phase 2 complete: 5 plans executed, 4 ADRs written, extension scaffold built, 23 tests passing/
