@@ -10,6 +10,9 @@ import type { BookTabData, BookRecord, BookStatus } from "../schema";
 import type { BookFormData } from "../components/BookForm";
 import { BookForm } from "../components/BookForm";
 import { BookList } from "../components/BookList";
+import { CurrentlyReading } from "../components/CurrentlyReading";
+import { EmptyHero } from "../components/EmptyHero";
+import { QueueCount } from "../components/QueueCount";
 
 export function App() {
   const [state, send] = useMachine(appMachine);
@@ -169,10 +172,29 @@ export function App() {
 
   // ready.viewing (default)
   const books = state.context.data?.books ?? {};
+  const allBooks = Object.values(books);
+  const currentlyReading =
+    allBooks
+      .filter((b) => b.status === "reading")
+      .sort((a, b) => a.addedAt.localeCompare(b.addedAt))[0] ?? null;
+  const queueCount = allBooks.filter((b) => b.status === "want_to_read").length;
 
   return (
     <div className="app">
       <h1>BookTab</h1>
+      <section className="hero-section">
+        {currentlyReading ? (
+          <CurrentlyReading
+            book={currentlyReading}
+            onStatusChange={handleStatusChange}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <EmptyHero onStartAdding={() => send({ type: "START_ADD" })} />
+        )}
+      </section>
+      <QueueCount count={queueCount} />
       <button type="button" onClick={() => send({ type: "START_ADD" })}>
         Add Book
       </button>
