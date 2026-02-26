@@ -115,3 +115,117 @@ test("dashboard: hero display updates when book status changes", async () => {
 
   await context.close();
 });
+
+test("queue: navigate to queue view and see queued books", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book (defaults to want_to_read)
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Neuromancer");
+  await page.getByLabel("Author(s)").fill("William Gibson");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue view
+  await page.getByRole("button", { name: "View Queue" }).click();
+
+  // Verify queue heading and book visible
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+  await expect(page.locator("text=Neuromancer")).toBeVisible();
+
+  // Navigate back to dashboard
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("queue: add an intention note to a queued book", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Snow Crash");
+  await page.getByLabel("Author(s)").fill("Neal Stephenson");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue view
+  await page.getByRole("button", { name: "View Queue" }).click();
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+
+  // Click Edit Note
+  await page.getByRole("button", { name: "Edit Note" }).click();
+
+  // Type a note
+  await expect(page.locator("text=Edit Note")).toBeVisible({ timeout: 5000 });
+  await page.getByRole("textbox").fill("Recommended by a colleague");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Verify note is visible in queue view
+  await expect(page.locator("text=Recommended by a colleague")).toBeVisible({ timeout: 5000 });
+
+  // Clean up — go back, delete
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("queue: note persists across page reloads", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("The Dispossessed");
+  await page.getByLabel("Author(s)").fill("Ursula K. Le Guin");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue, add a note
+  await page.getByRole("button", { name: "View Queue" }).click();
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Edit Note" }).click();
+  await page.getByRole("textbox").fill("Explores anarchist society");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Verify note is there
+  await expect(page.locator("text=Explores anarchist society")).toBeVisible({ timeout: 5000 });
+
+  // Reload the page
+  await page.reload();
+
+  // Navigate to queue again after reload
+  await expect(page.locator("text=BookTab")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "View Queue" }).click();
+
+  // Note should persist
+  await expect(page.locator("text=Explores anarchist society")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
