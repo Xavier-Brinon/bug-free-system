@@ -13,6 +13,8 @@ import { BookList } from "../components/BookList";
 import { CurrentlyReading } from "../components/CurrentlyReading";
 import { EmptyHero } from "../components/EmptyHero";
 import { QueueCount } from "../components/QueueCount";
+import { QueueList } from "../components/QueueList";
+import { QueueNoteEditor } from "../components/QueueNoteEditor";
 
 export function App() {
   const [state, send] = useMachine(appMachine);
@@ -123,6 +125,21 @@ export function App() {
     [send],
   );
 
+  const handleSaveNote = useCallback(
+    async (bookId: string, note: string) => {
+      const actor = libraryActorRef.current;
+      if (!actor) return;
+      actor.send({
+        type: "UPDATE_BOOK",
+        id: bookId,
+        updates: { queueNote: note },
+      });
+      await persistAndInvalidate(actor.getSnapshot().context.books);
+      send({ type: "NOTE_SAVED" });
+    },
+    [persistAndInvalidate, send],
+  );
+
   if (state.matches("loading")) {
     return (
       <div className="app">
@@ -170,6 +187,51 @@ export function App() {
     );
   }
 
+  // ready.viewingQueue
+  if (state.matches({ ready: "viewingQueue" })) {
+    const books = state.context.data?.books ?? {};
+
+    return (
+      <div className="app">
+        <h1>BookTab</h1>
+        <button type="button" onClick={() => send({ type: "BACK_TO_DASHBOARD" })}>
+          Back to Dashboard
+        </button>
+        <h2>Your Queue</h2>
+        <QueueList
+          books={books}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+          onEditNote={(id) => send({ type: "EDIT_NOTE", bookId: id })}
+        />
+        <button type="button" onClick={() => send({ type: "START_ADD" })}>
+          Add Book
+        </button>
+      </div>
+    );
+  }
+
+  // ready.editingNote
+  if (state.matches({ ready: "editingNote" })) {
+    const noteBookId = state.context.editingNoteBookId;
+    const noteBook = noteBookId ? state.context.data?.books[noteBookId] : null;
+
+    return (
+      <div className="app">
+        <h1>BookTab</h1>
+        <h2>Edit Note</h2>
+        {noteBook && <p>{noteBook.title}</p>}
+        <QueueNoteEditor
+          bookId={noteBookId ?? ""}
+          initialNote={noteBook?.queueNote ?? ""}
+          onSave={handleSaveNote}
+          onCancel={() => send({ type: "CANCEL_NOTE" })}
+        />
+      </div>
+    );
+  }
+
   // ready.viewing (default)
   const books = state.context.data?.books ?? {};
   const allBooks = Object.values(books);
@@ -195,6 +257,9 @@ export function App() {
         )}
       </section>
       <QueueCount count={queueCount} />
+      <button type="button" onClick={() => send({ type: "VIEW_QUEUE" })}>
+        View Queue
+      </button>
       <button type="button" onClick={() => send({ type: "START_ADD" })}>
         Add Book
       </button>

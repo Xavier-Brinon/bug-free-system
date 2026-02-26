@@ -141,4 +141,58 @@ describe("appMachine", () => {
     expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
     actor.stop();
   });
+
+  it("VIEW_QUEUE transitions from ready.viewing to ready.viewingQueue", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_QUEUE" });
+    expect(actor.getSnapshot().matches({ ready: "viewingQueue" })).toBe(true);
+    actor.stop();
+  });
+
+  it("BACK_TO_DASHBOARD transitions from ready.viewingQueue to ready.viewing", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_QUEUE" });
+    actor.send({ type: "BACK_TO_DASHBOARD" });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
+    actor.stop();
+  });
+
+  it("EDIT_NOTE transitions to ready.editingNote with book id in context", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_QUEUE" });
+    actor.send({ type: "EDIT_NOTE", bookId: "book-99" });
+    expect(actor.getSnapshot().matches({ ready: "editingNote" })).toBe(true);
+    expect(actor.getSnapshot().context.editingNoteBookId).toBe("book-99");
+    actor.stop();
+  });
+
+  it("NOTE_SAVED transitions back to ready.viewingQueue and clears editingNoteBookId", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_QUEUE" });
+    actor.send({ type: "EDIT_NOTE", bookId: "book-99" });
+    actor.send({ type: "NOTE_SAVED" });
+    expect(actor.getSnapshot().matches({ ready: "viewingQueue" })).toBe(true);
+    expect(actor.getSnapshot().context.editingNoteBookId).toBeNull();
+    actor.stop();
+  });
+
+  it("CANCEL_NOTE transitions back to ready.viewingQueue and clears editingNoteBookId", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_QUEUE" });
+    actor.send({ type: "EDIT_NOTE", bookId: "book-99" });
+    actor.send({ type: "CANCEL_NOTE" });
+    expect(actor.getSnapshot().matches({ ready: "viewingQueue" })).toBe(true);
+    expect(actor.getSnapshot().context.editingNoteBookId).toBeNull();
+    actor.stop();
+  });
 });
