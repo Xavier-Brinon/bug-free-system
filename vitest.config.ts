@@ -7,6 +7,9 @@ import { defineConfig } from "vitest/config";
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+// Mock for webextension-polyfill in Storybook tests (not a real extension context)
+const webExtPolyfillMock = path.resolve(dirname, ".storybook/webextension-polyfill-mock.ts");
+
 export default defineConfig({
   test: {
     passWithNoTests: true,
@@ -51,6 +54,11 @@ export default defineConfig({
             instances: [{ browser: "chromium" }],
           },
           setupFiles: [".storybook/vitest.setup.ts"],
+        },
+        resolve: {
+          alias: {
+            "webextension-polyfill": webExtPolyfillMock,
+          },
         },
       },
     ],
