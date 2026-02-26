@@ -64,6 +64,22 @@ export const Read: Story = {
   },
 };
 
+/** A queued book with an intention note. */
+export const WithQueueNote: Story = {
+  args: {
+    book: {
+      id: "book-5",
+      title: "Neuromancer",
+      authors: ["William Gibson"],
+      status: "want_to_read",
+      addedAt: "2026-02-01T12:00:00Z",
+      tags: [],
+      priority: 0,
+      queueNote: "Classic cyberpunk — recommended by a friend at the book club",
+    },
+  },
+};
+
 /** A book with multiple authors. */
 export const MultipleAuthors: Story = {
   args: {
