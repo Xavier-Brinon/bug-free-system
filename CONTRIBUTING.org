@@ -162,3 +162,27 @@ them to org-mode.
 *In summary:*
 - All project docs: org-mode (=.org=)
 - GSD plan/summary files: markdown (=.md=) -- required by tooling
+
+* Rule 8: Branch Per Phase, Merge to Main
+
+All work happens on a branch. Never commit directly to =main=.
+
+*Branching convention:*
+- One branch per phase: =phase-NN/short-description=
+  (e.g. =phase-02/extension-scaffold=, =phase-03/library-crud=)
+- Branch from =main= at the start of the phase
+- All plan commits within the phase go on the branch
+- Merge to =main= (or open a PR) when the phase is complete and verified
+- Delete the branch after merge
+
+*Rationale:* Working directly on =main= makes it hard to review a phase as a
+coherent unit, prevents partial rollback if a phase goes wrong, and skips the
+opportunity for a final review before integration. Branching per phase keeps
+=main= as the "last known good" state while allowing messy intermediate commits
+during development.
+
+*In practice:*
+- Before starting a phase: =git checkout -b phase-NN/short-description main=
+- Commit freely on the branch (tidy-up, ADRs, implementation, tests)
+- When the phase is complete: merge to =main= or open a PR for review
+- Push the branch to remote regularly for backup
