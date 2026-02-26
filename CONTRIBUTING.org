@@ -163,26 +163,28 @@ them to org-mode.
 - All project docs: org-mode (=.org=)
 - GSD plan/summary files: markdown (=.md=) -- required by tooling
 
-* Rule 8: Branch Per Phase, Merge to Main
+* Rule 8: Branch Per Wave, Merge to Main
 
 All work happens on a branch. Never commit directly to =main=.
 
 *Branching convention:*
-- One branch per phase: =phase-NN/short-description=
-  (e.g. =phase-02/extension-scaffold=, =phase-03/library-crud=)
-- Branch from =main= at the start of the phase
-- All plan commits within the phase go on the branch
-- Merge to =main= (or open a PR) when the phase is complete and verified
+- One branch per wave: =phase-NN/wave-W/short-description=
+  (e.g. =phase-03/wave-1/library-machine=, =phase-03/wave-2/components=)
+- Branch from =main= at the start of each wave
+- All plan commits within the wave go on the branch
+- Merge to =main= (=--no-ff=) when the wave is complete and verified
 - Delete the branch after merge
+- The next wave branches from the updated =main=
 
-*Rationale:* Working directly on =main= makes it hard to review a phase as a
-coherent unit, prevents partial rollback if a phase goes wrong, and skips the
-opportunity for a final review before integration. Branching per phase keeps
-=main= as the "last known good" state while allowing messy intermediate commits
-during development.
+*Rationale:* Branching per wave (rather than per phase) keeps each branch
+focused on a smaller unit of work. This makes code review easier, reduces
+merge conflicts, and allows =main= to advance incrementally within a phase.
+If a wave introduces a problem, only that wave's branch needs to be
+investigated -- not an entire phase of work.
 
 *In practice:*
-- Before starting a phase: =git checkout -b phase-NN/short-description main=
+- Before starting a wave: =git checkout -b phase-NN/wave-W/short-description main=
 - Commit freely on the branch (tidy-up, ADRs, implementation, tests)
-- When the phase is complete: merge to =main= or open a PR for review
+- When the wave is complete: merge to =main= with =--no-ff=
 - Push the branch to remote regularly for backup
+- Start the next wave by branching from the updated =main=

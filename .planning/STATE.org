@@ -152,8 +152,9 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - All ADRs include Mermaid diagrams (ob-mermaid syntax, =:file= header
   required) when the decision involves a flow, state transition, dependency
   graph, or data structure
-- Branch per phase: work on =phase-NN/short-description= branches, merge to
-  =main= when the phase is complete
+- Branch per wave: work on =phase-NN/wave-W/short-description= branches,
+  merge to =main= (=--no-ff=) when each wave is complete; next wave
+  branches from the updated =main=
 
 ** ADR log (running -- updated as decisions are made)
 
