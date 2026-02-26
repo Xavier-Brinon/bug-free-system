@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 4 -- New Tab Display (planned, not yet started)
+- *Current Focus* :: Phase 5 -- Queue (complete)
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
@@ -25,14 +25,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 4: New Tab Display           |
-| Current Plan     | 04-04 (complete)                   |
-| Phase Status     | Complete (4 plans, 2 waves)        |
-| Overall Progress | 4/6 phases complete                |
+| Current Phase    | Phase 5: Queue                     |
+| Current Plan     | 05-03 (complete)                   |
+| Phase Status     | Complete (3 plans, 2 waves)        |
+| Overall Progress | 5/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████████████████░░░░] 67%
-Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████████████████████] 83%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [████] → Phase 6 [░░░░]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -44,7 +44,7 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 |     2 | Extension Scaffold          | CORE-01--04             | Complete    |
 |     3 | Library CRUD                | LIB-01--04              | Complete    |
 |     4 | New Tab Display             | DISP-01--03             | Complete    |
-|     5 | Queue                       | QUEUE-01--02            | Not started |
+|     5 | Queue                       | QUEUE-01--02            | Complete    |
 |     6 | Data Safety                 | DATA-01--03             | Not started |
 
 * Performance Metrics
@@ -52,11 +52,11 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 4 / 6  |
-| Requirements met | 20 / 25 |
-| Plans executed   | 16     |
+| Phases complete  | 5 / 6  |
+| Requirements met | 22 / 25 |
+| Plans executed   | 19     |
 | ADRs written     | 10     |
-| Tests passing    | 100    |
+| Tests passing    | 124    |
 
 * Accumulated Context
 
@@ -210,18 +210,20 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 4 complete: 4 plans executed across
-  2 waves. Dashboard layout implemented with CurrentlyReading hero component,
-  EmptyHero empty state, QueueCount badge. App.tsx refactored from flat list to
-  structured dashboard. Storybook stories for all new components and App dashboard
-  states. Playwright E2E tests for hero display, empty state, and queue count.
-  100 tests passing (46 unit + 35 browser + 19 storybook + 4 E2E).
-- *Next action* :: Plan and execute Phase 5 (Queue).
-- *Context for next session* :: Phase 4 is complete on =main=. The new tab page
-  now shows a dashboard: currently-reading book in a hero section, empty state
-  prompt when nothing is being read, and a queue count badge. All CRUD from
-  Phase 3 still works. Phase 5 (Queue) adds a dedicated queue view and intention
-  notes. Plans for Phase 5 need to be created.
+- *Last action* :: [2026-02-26 Thu] -- Phase 5 complete: 3 plans executed across
+  2 waves. QueueList component filters and displays want_to_read books.
+  QueueNoteEditor allows adding/editing intention notes. BookCard displays
+  queueNote when present. appMachine extended with viewingQueue and editingNote
+  states. Queue navigation and note editing wired into App.tsx. Storybook stories
+  for all new components. 3 new Playwright E2E tests for queue workflows.
+  124 tests passing (51 unit + 48 browser + 25 storybook + 7 E2E).
+- *Next action* :: Plan and execute Phase 6 (Data Safety).
+- *Context for next session* :: Phase 5 is complete on =main=. The app now has
+  a dedicated queue view accessible from the dashboard (View Queue button).
+  Users can see all want_to_read books, add/edit intention notes that persist,
+  and navigate back to the dashboard. All CRUD and display features from
+  Phases 3-4 still work. Phase 6 (Data Safety) adds JSON export/import
+  with auto-backup. ADR-0010 needs to be written first.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/

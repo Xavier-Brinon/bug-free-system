@@ -26,7 +26,7 @@
   status of books; the core data loop works end-to-end
 - [X] *Phase 4: New Tab Display* -- Current book is shown prominently on every
   new tab; empty and populated states both handled
-- [ ] *Phase 5: Queue* -- Want-to-read list is visible and annotatable with
+- [X] *Phase 5: Queue* -- Want-to-read list is visible and annotatable with
   intention notes
 - [ ] *Phase 6: Data Safety* -- User can export and safely import their
   library; no data can be destroyed without a backup
@@ -258,9 +258,9 @@ QUEUE-01, QUEUE-02
 
 3 plans, 2 waves:
 
-- [ ] 05-01-PLAN.md — Tidy-up + QueueList component (TDD, browser tests) [Wave 1]
-- [ ] 05-02-PLAN.md — QueueNoteEditor component + BookCard queueNote display (TDD, browser tests) [Wave 1]
-- [ ] 05-03-PLAN.md — Wire queue into App.tsx + appMachine states + Storybook stories + Playwright E2E [Wave 2]
+- [X] 05-01-PLAN.md — Tidy-up + QueueList component (TDD, browser tests) [Wave 1]
+- [X] 05-02-PLAN.md — QueueNoteEditor component + BookCard queueNote display (TDD, browser tests) [Wave 1]
+- [X] 05-03-PLAN.md — Wire queue into App.tsx + appMachine states + Storybook stories + Playwright E2E [Wave 2]
 
 ** Phase 6: Data Safety
 :PROPERTIES:
@@ -313,7 +313,7 @@ TBD
 |     2 | Extension Scaffold          | 0/?            | Not started | --        |
 |     3 | Library CRUD                | 0/?            | Not started | --        |
 |     4 | New Tab Display             | 4/4            | Complete    | [2026-02-26 Thu] |
-|     5 | Queue                       | 0/?            | Not started | --        |
+|     5 | Queue                       | 3/3            | Complete    | [2026-02-26 Thu] |
 |     6 | Data Safety                 | 0/?            | Not started | --        |
 
 * Coverage Map
