@@ -9,7 +9,8 @@
   what's next — keeping your reading life visible without leaving the browser.
 - *Created* :: [2026-02-25 Tue]
 - *Revised* :: [2026-02-26 Thu] -- Phase 1 gains 3 ADR tasks (React, TanStack
-  Query, Storybook); Phase 2 gains Playwright ADR; ADR numbering revised
+  Query, Storybook); ADR numbering revised; ADR rule: write before each
+  decision, supersede on change, never rewrite history
 - *Depth* :: Comprehensive
 - *Coverage* :: 25/25 v1 requirements mapped ✓
 
@@ -60,8 +61,11 @@ graph LR
 
 All developer tooling, testing infrastructure, and documented practices are
 in place before a single feature is written -- so every subsequent phase
-builds on a known-good foundation. This includes ADRs for all stack
-decisions made before Phase 2 (React 19, TanStack Query, Storybook).
+builds on a known-good foundation. ADRs for the decisions made so far
+(Vitest, TDD, React 19, TanStack Query, Storybook) are written here.
+Remaining ADRs (XState, storage, Playwright, Open Library, JSON schema)
+are written at the start of the phase where each decision is first
+implemented.
 
 *** Dependencies
 
@@ -74,7 +78,8 @@ ADR-01, ADR-02, ADR-03, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06
 *** Success criteria
 
 1. =docs/decisions/= directory exists with MADR 4.0 template (org-mode) and
-   five ADRs: Vitest, TDD methodology, React 19, TanStack Query, Storybook
+   five ADRs covering decisions made before Phase 2: Vitest, TDD methodology,
+   React 19, TanStack Query, Storybook
 2. =vitest.config.ts= is present with jsdom environment and ~npm run test~
    executes successfully, returning no failures on an empty test suite
 3. A contributor can read =docs/decisions/= and understand the rationale for
@@ -135,10 +140,9 @@ CORE-01, CORE-02, CORE-03, CORE-04
 *** Plans
 
 TBD -- includes:
-- ADR-0006 (Playwright / Chromium E2E strategy)
-- ADR-0007 (XState v5 state management)
-- ADR-0008 (browser.storage.local only)
-- ADR-0009 (Open Library API)
+- ADR-0006 (Playwright / Chromium E2E strategy) -- written before E2E scaffold
+- ADR-0007 (XState v5 state management) -- written before machine code
+- ADR-0008 (browser.storage.local only) -- written before storage layer
 - Storybook setup + first story
 - Playwright smoke test scaffold
 
@@ -333,19 +337,19 @@ Total v1 mapped: 25/25 ✓
 
 * Key Decisions
 
-#+CAPTION: Decisions to be documented as ADRs (revised numbering)
-| Decision                                    | ADR file                  | Phase |
-|---------------------------------------------+---------------------------+-------|
-| Test framework: Vitest                      | =0001-vitest.org=         |     1 |
-| TDD: red-green-refactor vertical slices     | =0002-tdd.org=            |     1 |
-| UI layer: React 19                          | =0003-react.org=          |     1 |
-| Async storage: TanStack Query               | =0004-tanstack-query.org= |     1 |
-| Component isolation: Storybook              | =0005-storybook.org=      |     1 |
-| E2E testing: Playwright / Chromium          | =0006-playwright.org=     |     2 |
-| State management: XState v5                 | =0007-xstate.org=         |     2 |
-| Storage: ~browser.storage.local~ only       | =0008-storage.org=        |     2 |
-| Book metadata: Open Library (no API key)    | =0009-open-library.org=   |     2 |
-| Data portability: versioned JSON export     | =0010-json-schema.org=    |     6 |
+#+CAPTION: ADR log -- written before each decision is implemented; superseded if revised
+| Decision                                    | ADR file                  | Phase written |
+|---------------------------------------------+---------------------------+---------------|
+| Test framework: Vitest                      | =0001-vitest.org=         |             1 |
+| TDD: red-green-refactor vertical slices     | =0002-tdd.org=            |             1 |
+| UI layer: React 19                          | =0003-react.org=          |             1 |
+| Async storage: TanStack Query               | =0004-tanstack-query.org= |             1 |
+| Component isolation: Storybook              | =0005-storybook.org=      |             1 |
+| E2E testing: Playwright / Chromium          | =0006-playwright.org=     |             2 |
+| State management: XState v5                 | =0007-xstate.org=         |             2 |
+| Storage: ~browser.storage.local~ only       | =0008-storage.org=        |             2 |
+| Book metadata: Open Library (no API key)    | =0009-open-library.org=   |             3 |
+| Data portability: versioned JSON export     | =0010-json-schema.org=    |             6 |
 
 * Depth Calibration Note
 
@@ -358,5 +362,5 @@ comprehensive read for this scope.
 
 ---
 /Roadmap created: [2026-02-25 Tue]/
-/Revised: [2026-02-26 Thu] -- Phase 1 updated for React/TanStack/Storybook ADRs; ADR numbering revised 0001-0010/
+/Revised: [2026-02-26 Thu] -- React/TanStack/Storybook stack confirmed; ADR rule: write before decision, supersede on change, never rewrite history/
 /Requirements: 25 v1, 0 orphaned/

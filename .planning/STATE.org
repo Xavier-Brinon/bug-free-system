@@ -64,25 +64,24 @@ Phase 1 [░░░░] → Phase 2 [░░░░] → Phase 3 [░░░░] →
   (wiped on privacy clear)
 - *Manifest* :: V3 (Firefox 109+) -- no service workers; event pages are fine
 - *UI layer* :: React 19 -- chosen over Vanilla TS because UI complexity spans
-  4--6 views, stateful forms, and XState/TanStack Query integration; see
-  ADR-0003 (to be written in Phase 1)
+  4--6 views, stateful forms, and XState/TanStack Query integration; ADR-0003
+  written in Phase 1 before scaffold begins
 - *Async storage* :: TanStack Query wraps ~browser.storage.local~ -- provides
   loading/error/success states and cache invalidation via
-  ~browser.storage.onChanged~; see ADR-0004 (to be written in Phase 1)
+  ~browser.storage.onChanged~; ADR-0004 written in Phase 1
 - *State management* :: XState v5 machines/actors for ALL stateful logic;
-  ~@xstate/react~ (~useMachine~, ~useSelector~) bridges to React; see ADR-0007
-  (to be written in Phase 2)
+  ~@xstate/react~ (~useMachine~, ~useSelector~) bridges to React; ADR-0007
+  written in Phase 2 before any machine code
 - *No background script* :: architecture is single privileged page (new tab)
   with direct storage access
 - *Book metadata API* :: Open Library only -- no API key = no key exposure in
-  extension source; see ADR-0009 (to be written in Phase 2)
+  extension source; ADR-0009 written in Phase 3 before search is implemented
 - *Data structure* :: =booktab_data= key →
   ~{ schemaVersion, books: Record<id, BookRecord>, settings }~
 - *Component isolation* :: Storybook (Vite builder, React framework) --
-  installation deferred to Phase 2 (no components exist in Phase 1);
-  ADR-0005 written in Phase 1; see ADR-0005
+  ADR-0005 written in Phase 1; installation in Phase 2 when first component exists
 - *E2E testing* :: Playwright / Chromium only -- Playwright cannot load
-  extensions in its Firefox build; see ADR-0006 (to be written in Phase 2)
+  extensions in its Firefox build; ADR-0006 written in Phase 2 before E2E scaffold
 - *Documentation* :: All docs in org-mode; ADRs follow MADR 4.0 structure in
   =docs/decisions/= as =.org= files
 
@@ -128,8 +127,12 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 
 - Every phase begins with a tidy-up step (refactoring/cleanup before new
   feature code)
-- Every phase plan includes at least one ADR task (written before
-  implementation)
+- *ADR before implementation, at any phase* -- an ADR is written immediately
+  before implementing any architecturally significant decision, at whatever
+  phase that decision arises. If a decision is later revised, a new ADR
+  is written that supersedes the previous one (old ADR status set to
+  "Superseded by NNNN"). The history is never rewritten -- only extended.
+  This creates a complete, honest decision log for learning purposes.
 - TDD: red-green-refactor vertical slicing -- one test → one implementation
   → repeat
 - No tests written in bulk after implementation
@@ -139,20 +142,20 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
   required) when the decision involves a flow, state transition, dependency
   graph, or data structure
 
-** ADR numbering (locked)
+** ADR log (running -- updated as decisions are made)
 
-| ADR    | Decision                           | Phase |
-|--------+------------------------------------+-------|
-| 0001   | Vitest as test framework           |     1 |
-| 0002   | TDD red-green-refactor methodology |     1 |
-| 0003   | React 19 as UI rendering layer     |     1 |
-| 0004   | TanStack Query for async storage   |     1 |
-| 0005   | Storybook for component isolation  |     1 |
-| 0006   | Playwright / Chromium for E2E      |     2 |
-| 0007   | XState v5 state management         |     2 |
-| 0008   | browser.storage.local only         |     2 |
-| 0009   | Open Library API                   |     2 |
-| 0010   | Versioned JSON export schema       |     6 |
+| ADR    | Decision                           | Phase written | Status  |
+|--------+------------------------------------+---------------+---------|
+| 0001   | Vitest as test framework           | 1             | Pending |
+| 0002   | TDD red-green-refactor methodology | 1             | Pending |
+| 0003   | React 19 as UI rendering layer     | 1             | Pending |
+| 0004   | TanStack Query for async storage   | 1             | Pending |
+| 0005   | Storybook for component isolation  | 1             | Pending |
+| 0006   | Playwright / Chromium for E2E      | 2             | Pending |
+| 0007   | XState v5 state management         | 2             | Pending |
+| 0008   | browser.storage.local only         | 2             | Pending |
+| 0009   | Open Library API                   | 3             | Pending |
+| 0010   | Versioned JSON export schema       | 6             | Pending |
 
 ** Open questions
 
@@ -172,8 +175,11 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - [ ] Write ADR-0003 (React 19) -- Phase 1 (Plan 01-03)
 - [ ] Write ADR-0004 (TanStack Query) -- Phase 1 (Plan 01-03)
 - [ ] Write ADR-0005 (Storybook) -- Phase 1 (Plan 01-03)
-- [ ] Write ADR-0006 (Playwright) -- Phase 2
-- [ ] Write ADR-0007 (XState v5) -- Phase 2
+- [ ] Write ADR-0006 (Playwright / Chromium) -- Phase 2, before E2E scaffold
+- [ ] Write ADR-0007 (XState v5) -- Phase 2, before machine code
+- [ ] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
+- [ ] Write ADR-0009 (Open Library API) -- Phase 3, before search feature
+- [ ] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
 - [ ] Scaffold extension with =vite-plugin-web-extension= -- Phase 2
 - [ ] Lock data schema in =schema.ts= before any feature code -- Phase 2
 
@@ -191,9 +197,9 @@ None.
 - *Context for next session* :: Phase 1 is pure setup -- no feature code.
   Focus: ADR infrastructure (01-01, wave 1), Vitest + React + TanStack
   install with jsdom (01-02, wave 1), then five ADRs 0001--0005 (01-03,
-  wave 2). The executor should read the plan files and follow them exactly.
-  All file writes must use ~mcp_bash~ heredoc syntax (Edit/Write tools may
-  be blocked by plan-mode rules).
+  wave 2). ADRs 0006--0010 are written at the start of their respective
+  phases, immediately before the relevant implementation. The executor
+  should read the plan files and follow them exactly.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
