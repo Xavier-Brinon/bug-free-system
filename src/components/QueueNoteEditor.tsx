@@ -11,7 +11,7 @@ export function QueueNoteEditor({ bookId, initialNote, onSave, onCancel }: Queue
   const [note, setNote] = useState(initialNote);
 
   return (
-    <div>
+    <div className="queue-note-editor">
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
