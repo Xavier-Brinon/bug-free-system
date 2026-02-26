@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 3 -- Library CRUD (complete)
+- *Current Focus* :: Phase 4 -- New Tab Display (planned, not yet started)
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
@@ -25,14 +25,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 3: Library CRUD              |
-| Current Plan     | 03-04 (complete)                   |
-| Phase Status     | Complete (4 plans, 3 waves)        |
-| Overall Progress | 3/6 phases complete                |
+| Current Phase    | Phase 4: New Tab Display           |
+| Current Plan     | 04-04 (complete)                   |
+| Phase Status     | Complete (4 plans, 2 waves)        |
+| Overall Progress | 4/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████████████░░░░░░░░] 50%
-Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████████████████░░░░] 67%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [░░░░] → Phase 6 [░░░░]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -43,7 +43,7 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 |     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Complete    |
 |     2 | Extension Scaffold          | CORE-01--04             | Complete    |
 |     3 | Library CRUD                | LIB-01--04              | Complete    |
-|     4 | New Tab Display             | DISP-01--03             | Not started |
+|     4 | New Tab Display             | DISP-01--03             | Complete    |
 |     5 | Queue                       | QUEUE-01--02            | Not started |
 |     6 | Data Safety                 | DATA-01--03             | Not started |
 
@@ -52,11 +52,11 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 3 / 6  |
-| Requirements met | 17 / 25 |
-| Plans executed   | 12     |
+| Phases complete  | 4 / 6  |
+| Requirements met | 20 / 25 |
+| Plans executed   | 16     |
 | ADRs written     | 10     |
-| Tests passing    | 81     |
+| Tests passing    | 100    |
 
 * Accumulated Context
 
@@ -210,20 +210,19 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 3 complete: 4 plans executed across
-  3 waves. Library CRUD implemented with BookForm (add/edit), BookCard (display
-  + actions), BookList (collection + empty state), libraryMachine (XState v5
-  CRUD), and appMachine extended with ready sub-states (viewing/adding/editing).
-  Full integration in App.tsx with persistence to browser.storage.local.
-  Storybook stories for all components. E2E test for add-list-delete flow.
-  81 tests passing (46 unit + 20 browser + 12 storybook + 2 E2E + 1 lint check).
-- *Next action* :: Plan and execute Phase 4 (New Tab Display).
-- *Context for next session* :: Phase 3 is complete on =main=. The extension
-  supports full CRUD: add books, edit details, change reading status, delete
-  books. All changes persist to browser.storage.local. Phase 4 (New Tab Display)
-  adds the reading dashboard: currently reading, reading queue, and reading
-  history views. Plans for Phase 4 need to be created.
+- *Last action* :: [2026-02-26 Thu] -- Phase 4 complete: 4 plans executed across
+  2 waves. Dashboard layout implemented with CurrentlyReading hero component,
+  EmptyHero empty state, QueueCount badge. App.tsx refactored from flat list to
+  structured dashboard. Storybook stories for all new components and App dashboard
+  states. Playwright E2E tests for hero display, empty state, and queue count.
+  100 tests passing (46 unit + 35 browser + 19 storybook + 4 E2E).
+- *Next action* :: Plan and execute Phase 5 (Queue).
+- *Context for next session* :: Phase 4 is complete on =main=. The new tab page
+  now shows a dashboard: currently-reading book in a hero section, empty state
+  prompt when nothing is being read, and a queue count badge. All CRUD from
+  Phase 3 still works. Phase 5 (Queue) adds a dedicated queue view and intention
+  notes. Plans for Phase 5 need to be created.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
-/Updated: [2026-02-26 Thu] -- Phase 2 complete: 5 plans executed, 4 ADRs written, extension scaffold built, 23 tests passing/
+/Updated: [2026-02-26 Thu] -- Phase 4 complete: 4 plans executed, dashboard layout built, 100 tests passing/
