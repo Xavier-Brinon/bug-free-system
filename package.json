@@ -21,7 +21,10 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "build": "vite build",
+    "dev": "vite",
+    "lint:ext": "web-ext lint --source-dir dist"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
@@ -36,6 +39,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/webextension-polyfill": "^0.12.5",
+    "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.0.18",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",

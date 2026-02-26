@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "BookTab",
+  "version": "0.1.0",
+  "description": "Your reading life, one new tab at a time",
+  "chrome_url_overrides": {
+    "newtab": "src/newtab/index.html"
+  },
+  "permissions": ["storage", "unlimitedStorage"],
+  "host_permissions": ["https://openlibrary.org/*", "https://covers.openlibrary.org/*"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "booktab@yourdomain.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}
