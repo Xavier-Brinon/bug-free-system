@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import react from "@vitejs/plugin-react";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
@@ -25,6 +26,10 @@ export default defineConfig({
         },
       },
       {
+        plugins: [react()],
+        optimizeDeps: {
+          include: ["react", "react-dom", "react-dom/client", "react/jsx-dev-runtime"],
+        },
         test: {
           // Component tests: React components rendered in a real browser
           // Uses Playwright + Chromium via vitest-browser-react
