@@ -106,6 +106,24 @@ Phase 1 [░░░░] → Phase 2 [░░░░] → Phase 3 [░░░░] →
    ~chromium.launchPersistentContext()~; manual Firefox acceptance testing
    required
 
+** File format conventions
+
+All project documentation is written in org-mode format (=.org= files).
+
+*Exception -- GSD workflow artefacts:* The =.planning/phases/= directory
+contains files ending in =-PLAN.md= and =-SUMMARY.md=. These use the ~.md~
+extension because the GSD tooling (=gsd-tools.cjs=) hardcodes
+~endsWith('-PLAN.md')~ and ~endsWith('-SUMMARY.md')~ when scanning for plans
+and summaries. Renaming them to =.org= would break plan discovery, wave
+execution, and progress tracking.
+
+These files are GSD tooling artefacts, not project documentation. Their
+content uses YAML frontmatter + XML task blocks (the GSD format). Do not
+convert them to org-mode.
+
+All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
+=PROJECT.org=, =docs/decisions/*.org=, =CONTRIBUTING.org= -- are org-mode.
+
 ** Developer practice rules (locked in Phase 1)
 
 - Every phase begins with a tidy-up step (refactoring/cleanup before new
