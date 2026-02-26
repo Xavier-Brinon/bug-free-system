@@ -1,26 +1,29 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App";
+import { QUERY_KEY } from "../storage";
 import { getDefaultData } from "../schema";
 import type { BookTabData } from "../schema";
+
+/**
+ * Helper: create a QueryClient pre-seeded with data so the App component
+ * skips the loading state and renders immediately in the desired state.
+ *
+ * We use setQueryData() rather than defaultOptions.queries.queryFn because
+ * the App component specifies its own queryFn (loadBookTabData), which takes
+ * precedence over defaultOptions.
+ */
+function createSeededClient(data: BookTabData): QueryClient {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  client.setQueryData(QUERY_KEY, data);
+  return client;
+}
 
 const meta = {
   title: "App",
   component: App,
-  decorators: [
-    (Story) => {
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: { retry: false },
-        },
-      });
-      return (
-        <QueryClientProvider client={queryClient}>
-          <Story />
-        </QueryClientProvider>
-      );
-    },
-  ],
 } satisfies Meta<typeof App>;
 
 export default meta;
@@ -28,17 +31,15 @@ type Story = StoryObj<typeof meta>;
 
 /**
  * The app starts in loading state while waiting for browser.storage.local
- * to resolve. This is the first thing the user sees on a new tab.
+ * to resolve. We use a fresh QueryClient with no seeded data and staleTime
+ * Infinity so the query stays pending.
  */
 export const Loading: Story = {
   decorators: [
     (Story) => {
       const queryClient = new QueryClient({
         defaultOptions: {
-          queries: {
-            retry: false,
-            queryFn: () => new Promise<BookTabData>(() => {}),
-          },
+          queries: { retry: false, staleTime: Infinity, enabled: false },
         },
       });
       return (
@@ -57,14 +58,7 @@ export const Loading: Story = {
 export const Empty: Story = {
   decorators: [
     (Story) => {
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            queryFn: () => Promise.resolve(getDefaultData()),
-          },
-        },
-      });
+      const queryClient = createSeededClient(getDefaultData());
       return (
         <QueryClientProvider client={queryClient}>
           <Story />
@@ -116,14 +110,7 @@ export const WithBooks: Story = {
           },
         },
       };
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            queryFn: () => Promise.resolve(dataWithBooks),
-          },
-        },
-      });
+      const queryClient = createSeededClient(dataWithBooks);
       return (
         <QueryClientProvider client={queryClient}>
           <Story />
@@ -134,19 +121,23 @@ export const WithBooks: Story = {
 };
 
 /**
- * Error state when storage read fails.
+ * Error state when storage read fails. We pre-set an error on the query
+ * so the App component sees isError immediately.
  */
 export const ErrorState: Story = {
   decorators: [
     (Story) => {
       const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            queryFn: () => Promise.reject(new window.Error("Storage failed")),
-          },
+        defaultOptions: { queries: { retry: false, enabled: false } },
+      });
+      queryClient.setQueryData(QUERY_KEY, undefined);
+      queryClient.setQueryDefaults(QUERY_KEY, {
+        queryFn: () => {
+          throw new Error("Storage failed");
         },
       });
+      // Force the query into error state
+      queryClient.prefetchQuery({ queryKey: QUERY_KEY });
       return (
         <QueryClientProvider client={queryClient}>
           <Story />
