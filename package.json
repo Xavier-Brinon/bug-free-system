@@ -1,24 +1,28 @@
 {
   "name": "booktab",
   "version": "0.1.0",
+  "private": true,
   "description": "Firefox new tab book tracker",
-  "type": "module",
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+  "keywords": [
+    "book-tracker",
+    "extension",
+    "firefox"
+  ],
+  "license": "ISC",
+  "author": "",
   "repository": {
     "type": "git",
     "url": "git@github.com-personal:Xavier-Brinon/bug-free-system.git"
   },
-  "keywords": [
-    "firefox",
-    "extension",
-    "book-tracker"
-  ],
-  "author": "",
-  "license": "ISC",
-  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "@xstate/react": "^6.0.0",
@@ -33,6 +37,8 @@
     "@types/react-dom": "^19.2.3",
     "@types/webextension-polyfill": "^0.12.5",
     "@vitest/browser-playwright": "^4.0.18",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-web-extension": "^4.5.0",
