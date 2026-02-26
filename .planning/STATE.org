@@ -25,8 +25,8 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 | Field            | Value                              |
 |------------------+------------------------------------|
 | Current Phase    | Phase 2: Extension Scaffold        |
-| Current Plan     | None (not started)                 |
-| Phase Status     | Not started                        |
+| Current Plan     | 02-01 (planned, not started)       |
+| Phase Status     | Planned (5 plans, 4 waves)         |
 | Overall Progress | 1/6 phases complete                |
 
 #+BEGIN_EXAMPLE
@@ -191,18 +191,15 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 1 executed: all 3 plans complete
-  (01-01, 01-02, 01-03). ADR infrastructure created, Vitest + React + TanStack
-  configured, 5 ADRs written (0001--0005). =npm run test= passes on empty suite.
-- *Next action* :: Plan and execute Phase 2 -- Extension Scaffold. Start with
-  ADR-0006 (Playwright), ADR-0007 (XState), ADR-0008 (storage). Then scaffold
-  the Firefox extension with =vite-plugin-web-extension=.
-- *Context for next session* :: Phase 1 is complete -- all tooling and practice
-  docs are in place. Phase 2 introduces the actual extension scaffold: manifest,
-  Vite build, XState machines, storage layer, Storybook setup, and Playwright
-  smoke tests. Three ADRs (0006--0008) must be written before their respective
-  implementations. The tidy-up step should be minimal since no feature code
-  exists yet.
+- *Last action* :: [2026-02-26 Thu] -- Phase 2 planned: 5 plans across 4 waves.
+  Architecture clarified (React SPA in extension shell). ADR-0012 written
+  (Vitest browser mode supersedes ADR-0001 jsdom).
+- *Next action* :: Execute Phase 2 starting with Plan 02-01 (tidy-up + 3 ADRs).
+- *Context for next session* :: Phase 2 plans are written in
+  =.planning/phases/02-extension-scaffold/=. Execute in wave order: 02-01
+  (Wave 1: tidy-up + ADRs), then 02-02 + 02-03 (Wave 2: scaffold + schema),
+  then 02-04 (Wave 3: XState), then 02-05 (Wave 4: Storybook + Playwright).
+  Plans 02-03 and 02-04 require TDD. The tidy-up in 02-01 should be trivial.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/

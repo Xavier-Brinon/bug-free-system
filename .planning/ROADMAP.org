@@ -139,12 +139,13 @@ CORE-01, CORE-02, CORE-03, CORE-04
 
 *** Plans
 
-TBD -- includes:
-- ADR-0006 (Playwright / Chromium E2E strategy) -- written before E2E scaffold
-- ADR-0007 (XState v5 state management) -- written before machine code
-- ADR-0008 (browser.storage.local only) -- written before storage layer
-- Storybook setup + first story
-- Playwright smoke test scaffold
+5 plans, 4 waves:
+
+- [ ] 02-01-PLAN.md — Tidy-up + ADR-0006 (Playwright E2E) + ADR-0007 (XState) + ADR-0008 (storage.local) [Wave 1]
+- [ ] 02-02-PLAN.md — Vite extension scaffold: manifest, build pipeline, minimal React app [Wave 2]
+- [ ] 02-03-PLAN.md — Data schema + storage layer with TDD (TanStack Query) [Wave 2]
+- [ ] 02-04-PLAN.md — XState v5 app machine with TDD + React wiring [Wave 3]
+- [ ] 02-05-PLAN.md — Storybook setup + first story + Playwright E2E smoke test [Wave 4]
 
 ** Phase 3: Library CRUD
 :PROPERTIES:
