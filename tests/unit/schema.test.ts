@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getDefaultData, STORAGE_KEY, bookTabDataSchema } from "../../src/schema";
+import { getDefaultData, STORAGE_KEY, bookTabDataSchema, createBookRecord } from "../../src/schema";
 import type { BookTabData, BookRecord } from "../../src/schema";
 
 describe("STORAGE_KEY", () => {
@@ -115,5 +115,51 @@ describe("bookTabDataSchema", () => {
       };
       expect(() => bookTabDataSchema.parse(data)).not.toThrow();
     }
+  });
+});
+
+describe("createBookRecord", () => {
+  it("returns a BookRecord with the given title and authors", () => {
+    const book = createBookRecord({ title: "Dune", authors: ["Frank Herbert"] });
+    expect(book.title).toBe("Dune");
+    expect(book.authors).toEqual(["Frank Herbert"]);
+  });
+
+  it("generates a unique id", () => {
+    const book1 = createBookRecord({ title: "A", authors: ["X"] });
+    const book2 = createBookRecord({ title: "B", authors: ["Y"] });
+    expect(book1.id).toBeTruthy();
+    expect(book2.id).toBeTruthy();
+    expect(book1.id).not.toBe(book2.id);
+  });
+
+  it("sets status to 'want_to_read' by default", () => {
+    const book = createBookRecord({ title: "Dune", authors: ["Frank Herbert"] });
+    expect(book.status).toBe("want_to_read");
+  });
+
+  it("sets addedAt to a valid ISO timestamp", () => {
+    const before = new Date().toISOString();
+    const book = createBookRecord({ title: "Dune", authors: ["Frank Herbert"] });
+    const after = new Date().toISOString();
+    expect(book.addedAt >= before).toBe(true);
+    expect(book.addedAt <= after).toBe(true);
+  });
+
+  it("sets empty defaults for tags and priority 0", () => {
+    const book = createBookRecord({ title: "Dune", authors: ["Frank Herbert"] });
+    expect(book.tags).toEqual([]);
+    expect(book.priority).toBe(0);
+  });
+
+  it("allows overriding status and coverUrl", () => {
+    const book = createBookRecord({
+      title: "Dune",
+      authors: ["Frank Herbert"],
+      coverUrl: "https://example.com/cover.jpg",
+      status: "reading",
+    });
+    expect(book.status).toBe("reading");
+    expect(book.coverUrl).toBe("https://example.com/cover.jpg");
   });
 });

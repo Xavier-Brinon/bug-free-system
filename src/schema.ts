@@ -40,11 +40,30 @@ export const bookTabDataSchema = z.object({
 
 // --- TypeScript Types (derived from Zod schemas) ---
 
+export type BookStatus = z.infer<typeof bookStatusSchema>;
 export type BookRecord = z.infer<typeof bookRecordSchema>;
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 export type BookTabData = z.infer<typeof bookTabDataSchema>;
 
-// --- Factory ---
+// --- Factories ---
+
+export function createBookRecord(input: {
+  title: string;
+  authors: string[];
+  coverUrl?: string;
+  status?: BookStatus;
+}): BookRecord {
+  return {
+    id: crypto.randomUUID(),
+    title: input.title,
+    authors: input.authors,
+    coverUrl: input.coverUrl,
+    status: input.status ?? "want_to_read",
+    addedAt: new Date().toISOString(),
+    tags: [],
+    priority: 0,
+  };
+}
 
 export function getDefaultData(): BookTabData {
   return {
