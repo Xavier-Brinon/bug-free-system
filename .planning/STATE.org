@@ -11,9 +11,10 @@
 - *Current Focus* :: Phase 2 -- Extension Scaffold
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
-  ~browser.storage.local~ + Vitest (jsdom) + =@testing-library/react= +
-  Storybook + Playwright/Chromium
-- *Target* :: Firefox extension (Manifest V3)
+  ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
+  =vitest-browser-react= + Storybook + Playwright/Chromium
+- *Target* :: React SPA delivered as a Firefox extension (Manifest V3) — the
+  extension is a thin shell; the app is a standard React SPA in the new tab page
 - *ADRs* :: =docs/decisions/= (MADR 4.0 structure, org-mode format)
 
 See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])

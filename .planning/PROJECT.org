@@ -12,6 +12,14 @@ front and center every time they open a new tab, while also managing a
 tagged, prioritized reading queue and capturing notes and reflections on
 books.
 
+Architecturally, BookTab is a *React single-page application* packaged as a
+Firefox extension. The extension is a thin delivery shell — =manifest.json=
+tells Firefox to load the React SPA as the new tab page. There are no
+background scripts, no content scripts, no popup — just a React app running
+in a browser tab with access to ~browser.storage.local~ for persistence.
+The extension packaging is what grants permission to replace the new tab
+page and persist data outside of =localStorage=.
+
 * Core Value
 
 Every new tab is a reminder of what you're reading and what's next —
@@ -49,6 +57,9 @@ keeping your reading life visible without leaving the browser.
 * Context
 
 - Delivered as a Firefox browser extension (WebExtension API)
+- *Architecture* :: React SPA inside a Firefox extension shell — no background
+  scripts, no content scripts, no popup; single privileged page with direct
+  storage access
 - Data lives in ~browser.storage.local~ -- no server, no auth, works offline
 - Book metadata sourced via search API (e.g. Open Library) with manual entry
   as fallback
@@ -65,8 +76,8 @@ keeping your reading life visible without leaving the browser.
   guideline)
 - *Data portability* :: JSON import/export must preserve all book data and notes
 - *Documentation* :: Org-mode format throughout; MADR 4.0 structure for ADRs
-- *Testing* :: Vitest (jsdom) + @testing-library/react; TDD red-green-refactor
-  vertical slicing
+- *Testing* :: Vitest browser mode (Playwright/Chromium) for component tests,
+  Node for unit tests; TDD red-green-refactor vertical slicing; see ADR-0012
 - *State* :: XState v5 machines/actors for all stateful logic; @xstate/react
   hooks bridge XState to React components
 
