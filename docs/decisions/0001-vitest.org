@@ -1,0 +1,100 @@
+#+title: Use Vitest as the test framework
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab is a TypeScript project built with Vite 7. We need a test framework
+for TDD red-green-refactor (see ADR-0002). The framework must support native
+ESM (no CommonJS transform), TypeScript without additional Babel or ts-jest
+configuration, a jsdom environment for React component tests via
+=@testing-library/react=, and fast execution for a tight feedback loop.
+
+* Decision Drivers
+
+- Native ESM support (no =jest.config= transform setup)
+- Same configuration as Vite (no parallel config maintenance)
+- Fast execution for tight TDD feedback loop
+- TypeScript support without Babel or ts-jest
+- jsdom environment for React component tests (=@testing-library/react=)
+- Actively maintained (2025/2026)
+
+* Considered Options
+
+- Vitest
+- Jest (with ts-jest or Babel transform)
+- Mocha + Chai
+
+* Decision Outcome
+
+Chosen option: "Vitest", because it shares Vite's configuration and plugin
+pipeline, supports native ESM and TypeScript without transforms, has jsdom
+environment built-in, and provides a Jest-compatible API that is familiar to
+most JavaScript developers.
+
+** Positive Consequences
+
+- No transform setup -- Vitest reads =vitest.config.ts= which extends the
+  Vite configuration naturally
+- Fast startup and execution -- HMR-style module graph reuse
+- Stable, Jest-compatible API (=describe=, =it=, =expect=)
+- jsdom environment works out-of-the-box for React component tests
+- =@testing-library/jest-dom= matchers integrate seamlessly
+
+** Negative Consequences / Trade-offs
+
+- Requires Vite in the toolchain (already a dependency for extension bundling)
+- Less widely adopted than Jest in legacy projects (not a concern for a new
+  project)
+
+* Pros and Cons of the Options
+
+** Vitest
+
+- Good, because it shares Vite's transform pipeline and config
+- Good, because native ESM means no CommonJS transform layer
+- Good, because jsdom environment is a first-class option
+- Good, because Jest-compatible API reduces learning curve
+- Bad, because it requires Vite (already in our toolchain)
+
+** Jest (with ts-jest or Babel transform)
+
+- Good, because it is the most widely used test framework
+- Good, because large community and ecosystem
+- Bad, because ESM support in Jest is still experimental (=--experimental-vm-modules=)
+- Bad, because TypeScript requires ts-jest or Babel transform configuration
+- Bad, because maintaining a separate Jest config alongside Vite config
+
+** Mocha + Chai
+
+- Good, because mature and battle-tested
+- Good, because highly configurable
+- Bad, because requires manual configuration for TypeScript, ESM, and jsdom
+- Bad, because no built-in watch mode or snapshot testing
+- Bad, because more boilerplate setup compared to Vitest or Jest
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0001-vitest-toolchain.svg :theme neutral
+graph LR
+    TS["TypeScript source\n(src/**/*.ts, .tsx)"]
+    TESTS["Test files\n(tests/**/*.test.ts, .tsx)"]
+    VITE["vite.config.ts\n(Vite 7)"]
+    VCFG["vitest.config.ts\n(jsdom environment)"]
+    VITEST["Vitest runner\n(npm run test)"]
+    OUT["Test results\npass / fail"]
+
+    TS --> VCFG
+    TESTS --> VCFG
+    VITE --> VCFG
+    VCFG --> VITEST
+    VITEST --> OUT
+#+end_src
+#+RESULTS:
+[[file:./images/0001-vitest-toolchain.svg]]

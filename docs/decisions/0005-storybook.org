@@ -1,0 +1,88 @@
+#+title: Use Storybook for component isolation and visual development
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab has 4--6 React views and several shared UI components (book card,
+status badge, search input, empty state). Without component isolation tooling,
+developers must load the full extension to see a component in various states
+-- slowing feedback and making edge-case states hard to reproduce (e.g., empty
+library, loading state, error state, long book titles).
+
+* Decision Drivers
+
+- Isolated component development without running the full extension
+- Visual documentation of all component states (loading, empty, error, populated)
+- Visual regression testing via Storybook's snapshot testing (no Chromatic
+  cloud service needed -- local snapshots only)
+- React is a first-class Storybook framework (Vite builder supported natively)
+
+* Considered Options
+
+- Storybook (Vite builder, React framework)
+- No isolation tooling (develop components in context of full extension only)
+- Ladle (lightweight Storybook alternative)
+
+* Decision Outcome
+
+Chosen option: "Storybook", because React and Vite are both first-class in
+Storybook. Preact (the original UI alternative) would have required manual
+configuration. Ladle is a viable lightweight alternative but has fewer
+integrations and a smaller community.
+
+*Installation timing:* Storybook is *not* installed in Phase 1. No React
+components exist yet -- a Storybook with zero stories has no value and adds
+setup noise before any UI work begins. Installation is deferred to Phase 2
+when the first component is created and there is something to render.
+
+** Positive Consequences
+
+- Isolated component development: each component can be viewed and tested in
+  all its states without running the full extension
+- Visual state documentation: a running Storybook serves as a living
+  component catalogue
+- Local snapshot regression testing: detect unintended visual changes without
+  a cloud service
+- No external cloud dependency (Chromatic not needed for this project's scale)
+
+** Negative Consequences / Trade-offs
+
+- ~5--10 MB dev dependency footprint (devDependencies only, not shipped)
+- Separate dev server (=npm run storybook=) alongside the extension dev server
+- Requires keeping stories up to date as components evolve
+- Deferred to Phase 2: Phase 1 has no visual component to display
+
+* Pros and Cons of the Options
+
+** Storybook (Vite builder, React framework)
+
+- Good, because React and Vite are first-class supported frameworks
+- Good, because rich addon ecosystem (accessibility, viewport, controls)
+- Good, because built-in snapshot testing for visual regression
+- Good, because large community and extensive documentation
+- Bad, because ~5--10 MB dev dependency
+- Bad, because separate dev server to maintain
+
+** No isolation tooling
+
+- Good, because zero additional dependencies
+- Good, because no configuration overhead
+- Bad, because edge-case states (empty, error, loading) are hard to reproduce
+- Bad, because no visual documentation of component states
+- Bad, because component development requires running the full extension
+
+** Ladle
+
+- Good, because lightweight (~1 MB)
+- Good, because fast startup
+- Good, because Vite-native (no Webpack fallback)
+- Bad, because smaller community and fewer integrations
+- Bad, because no built-in snapshot testing
+- Bad, because less comprehensive addon ecosystem

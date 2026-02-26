@@ -1,0 +1,113 @@
+#+title: Adopt TDD red-green-refactor vertical slicing for all features
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab needs a consistent testing methodology. Without a documented approach,
+tests tend to be written in bulk after implementation (reducing their value as
+design tools), or they test internal implementation details (making refactoring
+costly). This is a learning project where the decision trail matters as much
+as the output -- adopting a rigorous methodology from the start produces better
+code and a better learning record.
+
+* Decision Drivers
+
+- Tests should drive design, not verify existing code
+- No tests written in bulk after implementation (DEV-03)
+- Tests must survive refactoring without rewrite: public interface only (DEV-04)
+- One cohesive behaviour tested per cycle (vertical slice)
+- Each phase must begin with a cleanup pass (DEV-05)
+
+* Considered Options
+
+- Red-green-refactor vertical slicing (one test -> one implementation -> repeat)
+- Spec-first (write all tests, then all implementation)
+- Test-after (write implementation, then tests)
+
+* Decision Outcome
+
+Chosen option: "Red-green-refactor vertical slicing", because it keeps test
+and implementation in sync, forces each test to be written when the behaviour
+is freshest in mind, and produces tests coupled to public behaviour rather
+than internal structure.
+
+** Positive Consequences
+
+The methodology is defined by four specific constraints:
+
+1. *One test at a time:* Write one failing test (RED), run the suite (must
+   fail), write the minimal implementation to pass (GREEN), refactor if needed
+   (keep tests green), repeat.
+
+2. *No bulk tests:* Never write multiple tests before any implementation. Each
+   test is written immediately before the code that makes it pass.
+
+3. *Public interface only:* Tests call only public exports of a module. No
+   importing private functions, no mocking internal implementation details.
+   If a private function needs testing, extract it into its own module.
+
+4. *Phase tidy-up:* Each phase begins with a mandatory tidy-up commit
+   (refactoring, dead code removal, lint fixes) before any new feature work.
+
+** Negative Consequences / Trade-offs
+
+- Slower initial velocity on simple features compared to writing all tests
+  first or all code first. Accepted: design quality and refactor safety
+  outweigh speed.
+- Requires discipline to resist writing "just one more test" before
+  implementing. The methodology is a constraint, not a suggestion.
+
+* Pros and Cons of the Options
+
+** Red-green-refactor vertical slicing
+
+- Good, because tests drive design decisions at each step
+- Good, because tests always reflect current behaviour
+- Good, because refactoring is safe -- tests verify the public contract
+- Good, because public-interface testing makes tests resilient to internal changes
+- Bad, because slower than batch-writing tests or batch-writing code
+
+** Spec-first (write all tests, then implement)
+
+- Good, because full spec is visible before implementation begins
+- Bad, because tests are written without implementation feedback
+- Bad, because missed edge cases accumulate -- all discovered at the end
+- Bad, because encourages testing implementation shape rather than behaviour
+
+** Test-after (write implementation, then tests)
+
+- Good, because fastest initial velocity
+- Bad, because tests verify what the code already does, not what it should do
+- Bad, because edge cases are often forgotten
+- Bad, because tests are shaped by implementation knowledge, not specification
+- Bad, because provides false confidence
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0002-tdd-cycle.svg :theme neutral
+flowchart LR
+    A([Start:\nnew behaviour]) --> B
+    B["Write one\nfailing test"] --> C
+    C(["Run test\nsuite"])
+    C --> D{Result?}
+    D -- RED\nfail --> E["Write minimal\nimplementation"]
+    E --> F(["Run test\nsuite"])
+    F --> G{Result?}
+    G -- RED\nstill failing --> E
+    G -- GREEN\npassing --> H{"Refactor\nneeded?"}
+    H -- Yes --> I["Refactor\n(keep tests green)"]
+    I --> J(["Run test\nsuite"])
+    J --> K{Result?}
+    K -- GREEN --> L([Next\nbehaviour])
+    K -- RED --> I
+    H -- No --> L
+#+end_src
+#+RESULTS:
+[[file:./images/0002-tdd-cycle.svg]]

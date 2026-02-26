@@ -1,0 +1,129 @@
+#+title: Use React 19 as the UI rendering layer
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+The original stack research recommended Vanilla TypeScript with Preact as an
+upgrade path (see =.planning/research/STACK.org=). During Phase 1 planning,
+the actual UI scope was evaluated more carefully: 4--6 distinct views (new tab
+hero, library list, book detail, queue, search, import/export), stateful
+forms, conditional rendering driven by XState machines, and async data from
+=browser.storage.local=. This complexity justifies a proper component model.
+
+The original "no heavy frameworks if avoidable" constraint in =PROJECT.org=
+is superseded by this decision.
+
+* Decision Drivers
+
+- =@xstate/react= (=useMachine=, =useSelector=) is the official XState React
+  binding; Preact compatibility is unofficial and lags behind
+- TanStack Query has first-class React support; Preact adapter is
+  community-maintained and not guaranteed to track upstream
+- Storybook supports React as a first-class framework; Preact requires manual
+  Vite builder configuration
+- 4--6 view UI with stateful forms benefits from a component model with
+  declarative state synchronisation
+- React 19 bundle cost (~45 KB) is acceptable for an extension that loads on
+  user demand (new tab), not on every page load
+
+* Considered Options
+
+- React 19
+- Vanilla TypeScript + CSS
+- Preact 10.x
+
+* Decision Outcome
+
+Chosen option: "React 19", because =@xstate/react= and TanStack Query both
+have first-class React support, the UI scope (multi-view, stateful forms,
+XState integration) justifies a component model, and the bundle size is
+acceptable for an extension loaded on demand.
+
+** Positive Consequences
+
+- Official =@xstate/react= hooks (=useMachine=, =useSelector=, =useActorRef=)
+  integrate state machines cleanly into the component tree
+- First-class TanStack Query support with =QueryClientProvider=,
+  =useQuery=, =useMutation=
+- Storybook works out-of-the-box with React framework and Vite builder
+- Component isolation aids testing with =@testing-library/react=
+- Large ecosystem and documentation for learning
+
+** Negative Consequences / Trade-offs
+
+- ~45 KB runtime bundle added to the extension. Acceptable: the extension
+  loads on user demand (new tab), not on every page load
+- Vanilla TypeScript would be smaller but would require hand-rolled view
+  switching, state synchronisation, and DOM manipulation across 4--6 views --
+  complexity that React handles declaratively
+- Preact (~3 KB) would be lighter but lacks first-class support from
+  =@xstate/react=, TanStack Query, and Storybook
+
+* Pros and Cons of the Options
+
+** React 19
+
+- Good, because official =@xstate/react= hooks
+- Good, because first-class TanStack Query integration
+- Good, because Storybook supports React as a first-class framework
+- Good, because =@testing-library/react= is the canonical component testing tool
+- Good, because large community, extensive documentation, and mature ecosystem
+- Bad, because ~45 KB bundle size (acceptable for new tab extension)
+
+** Vanilla TypeScript + CSS
+
+- Good, because zero runtime dependency overhead
+- Good, because maximum control over DOM manipulation
+- Bad, because manual view routing, state sync, and DOM updates across 4--6 views
+- Bad, because no declarative component model for complex forms
+- Bad, because no standard component testing library (would need custom helpers)
+- Bad, because =@xstate/react= hooks unavailable -- manual subscription wiring required
+
+** Preact 10.x
+
+- Good, because ~3 KB bundle size
+- Good, because React-compatible API (mostly)
+- Bad, because =@xstate/react= compatibility is unofficial and lags
+- Bad, because TanStack Query's Preact adapter is community-maintained
+- Bad, because Storybook requires manual configuration for Preact
+- Bad, because subtle API differences can cause hard-to-debug issues
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0003-react-component-model.svg :theme neutral
+graph TD
+    subgraph XState["XState v5 Machines"]
+        M1["appMachine\n(view routing)"]
+        M2["bookMachine\n(CRUD state)"]
+    end
+
+    subgraph TanStack["TanStack Query"]
+        Q1["useBooks()\n(cache + storage.local)"]
+        Q2["useMutation()\n(optimistic updates)"]
+    end
+
+    subgraph React["React 19 Components"]
+        C1["NewTabPage"]
+        C2["LibraryView"]
+        C3["BookDetail"]
+        C4["QueueView"]
+    end
+
+    M1 -- useSelector --> C1
+    M2 -- useMachine --> C2
+    Q1 -- data --> C2
+    Q1 -- data --> C3
+    Q2 -- mutate --> C2
+    C1 --> C2
+    C1 --> C3
+    C1 --> C4
+#+end_src
+#+RESULTS:
+[[file:./images/0003-react-component-model.svg]]

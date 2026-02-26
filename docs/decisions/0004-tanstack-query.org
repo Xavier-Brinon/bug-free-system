@@ -1,0 +1,118 @@
+#+title: Use TanStack Query to wrap browser.storage.local
+#+author: BookTab
+#+date: [2026-02-26 Wed]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+=browser.storage.local= is an async API. Without a structured async data
+layer, every component that reads storage must manage its own loading, error,
+and success states -- leading to duplicated code, race conditions on tab open,
+and stale data after mutations. BookTab needs a solution that handles this
+consistently across all components.
+
+A critical pitfall identified in research (=PITFALLS.org=): opening a new tab
+fires an async =storage.get()= call. If the UI renders before the data
+resolves, the user sees a flash of empty state or, worse, the app writes
+default data over existing data. The async data layer must prevent this race
+condition.
+
+* Decision Drivers
+
+- Eliminate async race condition on new tab open (critical pitfall)
+- Consistent loading/error/success states across all components
+- Cache invalidation via =browser.storage.onChanged= listener
+- Optimistic updates for fast UI on mutations (add/edit/delete book)
+- Avoid manual refetch coordination between components
+- No TanStack Router -- XState machine state drives view switching instead
+  (3--4 views is below the threshold where a dedicated router adds value)
+
+* Considered Options
+
+- TanStack Query (React Query v5) wrapping =browser.storage.local=
+- SWR wrapping =browser.storage.local=
+- Manual =useEffect= + =useState= per component
+
+* Decision Outcome
+
+Chosen option: "TanStack Query", because it has first-class React support,
+robust cache invalidation patterns, optimistic update support built-in, and
+no Redux or Context boilerplate. SWR is a valid alternative but TanStack Query
+has richer mutation support and better TypeScript type inference.
+
+** Positive Consequences
+
+- Single source of truth for async storage state -- no duplicated
+  loading/error/success logic in each component
+- Race condition on tab open handled by the query loading state: the UI shows
+  a loading state until =storage.get()= resolves
+- Cache invalidated via =browser.storage.onChanged= → =queryClient.invalidateQueries()=
+  -- all components update automatically when storage changes
+- Optimistic updates via =useMutation= make add/edit/delete feel instant
+
+** Negative Consequences / Trade-offs
+
+- Adds ~47 KB (compressed) to the bundle. Accepted: the async state management
+  complexity it replaces would require equivalent custom code
+- Adds a dependency that must be kept up to date
+- No TanStack Router -- XState machine state drives view switching instead
+
+* Pros and Cons of the Options
+
+** TanStack Query (React Query v5)
+
+- Good, because first-class React support with =QueryClientProvider=
+- Good, because built-in loading/error/success state management
+- Good, because optimistic update support via =useMutation=
+- Good, because cache invalidation with =invalidateQueries()=
+- Good, because strong TypeScript inference for query and mutation types
+- Bad, because ~47 KB bundle size (compressed)
+- Bad, because abstraction over a relatively simple storage API
+
+** SWR
+
+- Good, because lightweight (~13 KB)
+- Good, because simple API for data fetching
+- Bad, because mutation support is less robust than TanStack Query
+- Bad, because less TypeScript inference for mutation types
+- Bad, because less community tooling for =browser.storage.local= adapters
+
+** Manual useEffect + useState per component
+
+- Good, because zero additional dependencies
+- Good, because maximum control over each component's data flow
+- Bad, because duplicated loading/error/success state in every component
+- Bad, because no built-in cache invalidation -- manual refetch coordination
+- Bad, because race conditions on tab open must be handled manually per component
+- Bad, because optimistic updates require significant custom code
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0004-tanstack-storage-flow.svg :theme neutral
+sequenceDiagram
+    participant C as React Component
+    participant Q as TanStack Query
+    participant S as browser.storage.local
+    participant E as storage.onChanged
+
+    C->>Q: useBooks() / useQuery
+    Q->>S: storage.local.get('booktab_data')
+    S-->>Q: { books, schemaVersion }
+    Q-->>C: { data, isLoading, isError }
+
+    Note over C,Q: User adds a book
+    C->>Q: addBook mutation
+    Q->>S: storage.local.set(updated)
+    S-->>E: onChanged event fires
+    E->>Q: queryClient.invalidateQueries()
+    Q->>S: refetch
+    S-->>Q: updated data
+    Q-->>C: fresh data rendered
+#+end_src
+#+RESULTS:
+[[file:./images/0004-tanstack-storage-flow.svg]]
