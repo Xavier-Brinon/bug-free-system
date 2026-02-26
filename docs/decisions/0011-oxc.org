@@ -1,0 +1,132 @@
+#+title: Use Oxc (Oxlint + Oxfmt) for linting and formatting
+#+author: BookTab
+#+date: [2026-02-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab needs code quality tooling -- a linter for correctness checks and a
+formatter for consistent style. The project is greenfield (no existing ESLint
+or Prettier configuration), so there is no migration burden.
+
+The Oxc project ("Oxidation Compiler") is a collection of high-performance
+JavaScript/TypeScript tools written in Rust, developed by VoidZero -- the
+same organisation behind Vite and Rolldown. Oxc is heading toward native
+integration with the Vite ecosystem.
+
+* Decision Drivers
+
+- Performance: fast feedback loop during development and in CI
+- Unified toolchain: alignment with Vite ecosystem (VoidZero)
+- Zero-config start: sensible defaults without extensive configuration
+- Built-in TypeScript, React, and JSX support without plugin installation
+- Greenfield project: no existing ESLint/Prettier config to migrate
+
+* Considered Options
+
+- Oxc (Oxlint + Oxfmt)
+- ESLint + Prettier
+- Biome
+
+* Decision Outcome
+
+Chosen option: "Oxc (Oxlint + Oxfmt)", because it provides near-instant
+linting and formatting with sensible defaults, native TypeScript and React
+support without plugins, and alignment with the Vite/VoidZero toolchain
+direction.
+
+Two separate packages installed as devDependencies:
+- =oxlint= -- linter (replaces ESLint)
+- =oxfmt= -- formatter (replaces Prettier)
+
+Scripts:
+- =npm run lint= / =npm run lint:fix= -- lint all files
+- =npm run fmt= / =npm run fmt:check= -- format all files / check only
+
+** Positive Consequences
+
+- Near-instant feedback: Oxlint is 50--100x faster than ESLint; Oxfmt is
+  ~30x faster than Prettier
+- 695+ built-in lint rules including ESLint core, TypeScript, React, JSX-a11y,
+  and Unicorn -- no plugin installation needed
+- Type-aware linting via tsgo (TypeScript 7 Go port) for checks like floating
+  promise detection
+- Oxfmt is Prettier-compatible: formatting output matches Prettier for
+  JavaScript and TypeScript
+- Built-in import sorting and Tailwind CSS class sorting in Oxfmt
+- Future-proof: Oxc tools are heading toward native Vite integration
+- Correctness-focused defaults: Oxlint prioritises high-signal checks out of
+  the box
+
+** Negative Consequences / Trade-offs
+
+- Oxfmt is in beta (announced 2026-02-24) -- niche formatting edge cases may
+  differ from Prettier (~95% Prettier test suite compatibility)
+- Smaller community compared to ESLint/Prettier
+- Some niche ESLint plugins may not have Oxlint equivalents (not relevant for
+  BookTab's scope)
+- Two separate npm packages (=oxlint= + =oxfmt=) rather than a single unified
+  tool
+
+* Pros and Cons of the Options
+
+** Oxc (Oxlint + Oxfmt)
+
+- Good, because 50--100x faster linting than ESLint
+- Good, because ~30x faster formatting than Prettier
+- Good, because 695+ built-in rules with zero plugin setup
+- Good, because native TypeScript + React + JSX support
+- Good, because Prettier-compatible formatting output
+- Good, because VoidZero ecosystem alignment (Vite, Rolldown)
+- Good, because type-aware linting via tsgo
+- Bad, because Oxfmt is beta -- formatting may have edge cases
+- Bad, because smaller community and fewer third-party integrations
+- Bad, because two packages instead of one unified binary
+
+** ESLint + Prettier
+
+- Good, because industry standard with massive ecosystem
+- Good, because extensive plugin library for every framework and pattern
+- Good, because mature, stable, well-documented
+- Good, because universal editor support
+- Bad, because slow -- ESLint is 50--100x slower than Oxlint
+- Bad, because requires plugin installation for TypeScript, React, import
+  sorting, etc.
+- Bad, because configuration complexity (flat config, plugin resolution,
+  Prettier conflict resolution)
+- Bad, because two tools that need coordination (eslint-config-prettier)
+
+** Biome
+
+- Good, because single binary for linting and formatting
+- Good, because fast (Rust-based, similar performance tier to Oxc)
+- Good, because growing community and good documentation
+- Bad, because uses its own type inference rather than the TypeScript compiler
+  (coverage still improving)
+- Bad, because not part of the VoidZero/Vite ecosystem
+- Bad, because formatting differs from Prettier in some cases
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0011-oxc-tooling-flow.svg :theme neutral
+graph LR
+    DEV["Developer\nwrites code"] --> FMT["oxfmt\n(format)"]
+    FMT --> LINT["oxlint\n(lint)"]
+    LINT --> TSC["tsc --noEmit\n(type check)"]
+    TSC --> TEST["vitest\n(test)"]
+    TEST --> BUILD["vite build\n(bundle)"]
+
+    style DEV fill:#e8f5e9
+    style FMT fill:#e3f2fd
+    style LINT fill:#e3f2fd
+    style TSC fill:#fff3e0
+    style TEST fill:#fff3e0
+    style BUILD fill:#fce4ec
+#+end_src
+#+RESULTS:
+[[file:./images/0011-oxc-tooling-flow.svg]]

@@ -1,0 +1,158 @@
+#+title: Use XState v5 for all stateful logic
+#+author: BookTab
+#+date: [2026-02-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab has several concerns that produce stateful transitions: asynchronous
+data loading from =browser.storage.local=, view routing across 3--4 views
+(current reading, queue, history, add/edit), and form state for adding and
+editing books. Without explicit state management, these concerns produce
+ad-hoc boolean flags (=isLoading=, =hasError=, =isReady=) that are easy to
+combine incorrectly and impossible to visualize.
+
+The async storage race condition (Pitfall 8) is particularly dangerous: the
+new tab page must show a loading state until storage resolves, and must never
+allow user interaction before data is available. A state machine naturally
+enforces this gate.
+
+* Decision Drivers
+
+- Prevent impossible states (e.g. "loading AND error", "ready but no data")
+- Gate user interaction behind data availability (loading -> ready transition)
+- Visualizable state diagrams that match the code
+- Testable without React -- pure machine logic can be unit tested in Node
+- React integration via =@xstate/react= (=useMachine=, =useSelector=,
+  =useActorRef=)
+
+* Considered Options
+
+- XState v5 machines/actors
+- =useState= / =useReducer= (React built-in)
+- Zustand (lightweight global store)
+- Redux (centralized store with reducers)
+
+* Decision Outcome
+
+Chosen option: "XState v5", because it makes impossible states unrepresentable,
+produces testable pure machines, and naturally enforces the loading gate that
+prevents the async storage race condition.
+
+All stateful logic flows through XState v5 machines/actors. No ad-hoc
+=useState= flags for async transitions. Components are pure renderers of
+machine state via =@xstate/react= hooks.
+
+The app machine manages the application lifecycle:
+- *loading* (initial): entered on mount, waits for storage data via TanStack Query
+- *ready*: data loaded, UI interactive, user can navigate views
+- *error*: storage read failed, shows error message with retry option
+
+Events:
+- =DATA_LOADED= (with =BookTabData= payload): loading -> ready
+- =DATA_FAILED= (with error): loading -> error
+- =RETRY=: error -> loading
+
+** Positive Consequences
+
+- Impossible states are structurally prevented (machine can only be in one
+  state at a time)
+- Loading gate prevents user interaction before data resolves (Pitfall 8 mitigated)
+- Machine logic is testable without React or browser APIs
+- State diagrams in ADRs match the running code
+- =@xstate/react= provides clean React integration without coupling machine
+  logic to React
+
+** Negative Consequences / Trade-offs
+
+- Learning curve for developers unfamiliar with state machines
+- More boilerplate than simple =useState= for trivial state
+- XState v5 is a significant dependency (~35KB gzip) -- acceptable for an
+  extension but notable
+- Requires bridging TanStack Query state to machine events (useEffect bridge
+  in App component)
+
+* Pros and Cons of the Options
+
+** XState v5
+
+- Good, because impossible states are structurally prevented
+- Good, because machines are testable without React (pure logic)
+- Good, because state diagrams serve as living documentation
+- Good, because =@xstate/react= provides idiomatic React integration
+- Good, because naturally models the loading -> ready -> error lifecycle
+- Bad, because ~35KB gzip dependency size
+- Bad, because learning curve for state machine concepts
+- Bad, because more verbose than useState for simple boolean flags
+
+** useState / useReducer
+
+- Good, because zero additional dependencies
+- Good, because familiar to all React developers
+- Good, because minimal boilerplate
+- Bad, because ad-hoc boolean flags can produce impossible states
+  (=isLoading && hasError= simultaneously)
+- Bad, because no visual state diagram
+- Bad, because state logic coupled to React components -- harder to test in
+  isolation
+
+** Zustand
+
+- Good, because lightweight (~1KB)
+- Good, because simple API (=create= + =useStore=)
+- Good, because state accessible outside React
+- Bad, because global mutable store -- not a state machine
+- Bad, because impossible states still possible (same boolean flag problem)
+- Bad, because no built-in state transition visualization
+
+** Redux
+
+- Good, because mature ecosystem with DevTools
+- Good, because centralized state with time-travel debugging
+- Good, because actions/reducers pattern is well-understood
+- Bad, because heavyweight for a single-page extension (~7KB gzip + toolkit)
+- Bad, because significant boilerplate (slices, actions, selectors)
+- Bad, because overkill for BookTab's scope (3--4 views, ~5 state transitions)
+- Bad, because same boolean flag problem unless combined with state machines
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0007-xstate-app-machine.svg :theme neutral
+stateDiagram-v2
+    [*] --> loading
+    loading --> ready : DATA_LOADED
+    loading --> error : DATA_FAILED
+    error --> loading : RETRY
+    ready --> ready : DATA_LOADED
+
+    state loading {
+        [*] --> waitingForStorage
+        note right of waitingForStorage
+            TanStack Query fetches from
+            browser.storage.local
+        end note
+    }
+
+    state ready {
+        [*] --> idle
+        note right of idle
+            UI interactive
+            BookTabData in context
+        end note
+    }
+
+    state error {
+        [*] --> showError
+        note right of showError
+            Retry button sends
+            RETRY event
+        end note
+    }
+#+end_src
+#+RESULTS:
+[[file:./images/0007-xstate-app-machine.svg]]

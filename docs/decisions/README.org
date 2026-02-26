@@ -115,4 +115,8 @@ This produces a complete, honest decision log.
 | 0003 | React 19 as UI rendering layer               | Accepted              |
 | 0004 | TanStack Query for async storage             | Accepted              |
 | 0005 | Storybook for component isolation            | Accepted              |
+| 0006 | Playwright/Chromium for E2E smoke tests      | Accepted              |
+| 0007 | XState v5 for all stateful logic             | Accepted              |
+| 0008 | browser.storage.local as sole persistence    | Accepted              |
+| 0011 | Oxc (Oxlint + Oxfmt) for linting/formatting | Accepted              |
 | 0012 | Vitest browser mode (replaces jsdom)         | Accepted              |

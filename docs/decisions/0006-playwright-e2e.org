@@ -1,0 +1,129 @@
+#+title: Use Playwright with Chromium for E2E smoke tests
+#+author: BookTab
+#+date: [2026-02-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab is a Firefox extension that replaces the new tab page with a React
+SPA. End-to-end testing must verify that the extension loads correctly in a
+real browser, renders the new tab page, and supports basic user flows.
+
+Playwright is the project's existing browser automation tool (already
+installed for Vitest browser mode). However, Playwright's Firefox build does
+*not* support loading browser extensions -- this is a known Playwright
+limitation documented in their API reference. E2E tests that require a loaded
+extension must therefore run in Chromium.
+
+* Decision Drivers
+
+- Playwright is already a project dependency (via =@vitest/browser-playwright=)
+- Playwright's Firefox build cannot load extensions (=BrowserType.launchPersistentContext= with
+  =--load-extension= is Chromium-only)
+- Chromium supports loading unpacked extensions via =launchPersistentContext=
+- The extension uses standard WebExtension APIs (Manifest V3) that work
+  identically in Chromium and Firefox
+- Manual testing in Firefox via =about:debugging= remains necessary for true
+  acceptance validation
+
+* Considered Options
+
+- Playwright with Chromium for E2E smoke tests + manual Firefox testing
+- Selenium WebDriver (supports Firefox extension loading)
+- No E2E tests (unit + component tests only)
+
+* Decision Outcome
+
+Chosen option: "Playwright with Chromium for E2E smoke tests", because
+Playwright is already installed, Chromium provides reliable extension loading,
+and the WebExtension API surface used by BookTab is identical across browsers.
+Manual Firefox testing via =about:debugging= handles the acceptance gap.
+
+The testing strategy has four tiers:
+
+1. *Vitest (Node)* -- unit tests: XState machines, schema validation, storage
+   module, utilities. Fast, no browser needed.
+2. *Vitest browser mode (Chromium)* -- component tests: React components
+   rendered in a real Chromium browser via =vitest-browser-react= (ADR-0012).
+3. *Playwright (Chromium)* -- E2E smoke tests: full extension loaded via
+   =chromium.launchPersistentContext()=, new tab page renders, basic user
+   flows work end-to-end. Requires =npm run build= first (dist/ must exist).
+4. *Manual Firefox* -- true acceptance testing: extension loaded via
+   =about:debugging= > "This Firefox" > "Load Temporary Add-on". Human
+   verification of Firefox-specific behaviour.
+
+** Positive Consequences
+
+- Single browser automation framework (Playwright) for both component tests
+  and E2E tests
+- No additional test framework dependencies
+- E2E tests run against a real built extension (not a dev server)
+- Chromium proxy is sufficient because the WebExtension APIs used (storage,
+  chrome_url_overrides) behave identically in Firefox and Chromium
+- Testing pyramid is complete: unit + component + E2E + manual acceptance
+
+** Negative Consequences / Trade-offs
+
+- E2E tests run in Chromium, not Firefox -- Firefox-specific rendering or API
+  edge cases are not caught by automation
+- Manual Firefox testing cannot be automated or run in CI
+- Extension must be built (=npm run build=) before E2E tests can run
+- =launchPersistentContext= requires =headless: false= in Chromium for
+  extension loading (CI requires =xvfb-run= or equivalent)
+
+* Pros and Cons of the Options
+
+** Playwright with Chromium + manual Firefox
+
+- Good, because Playwright is already installed (zero new dependencies)
+- Good, because =launchPersistentContext= reliably loads extensions in Chromium
+- Good, because consistent tooling across component and E2E tiers
+- Bad, because Firefox E2E is manual-only (no CI coverage for Firefox)
+- Bad, because requires headless workaround (=xvfb-run=) in CI
+
+** Selenium WebDriver
+
+- Good, because supports loading extensions in real Firefox
+- Good, because tests run in the actual target browser
+- Bad, because adds a second browser automation framework alongside Playwright
+- Bad, because slower test execution than Playwright
+- Bad, because more complex setup (geckodriver, WebDriver protocol)
+- Bad, because Vitest browser mode already uses Playwright -- two frameworks
+  increases maintenance burden
+
+** No E2E tests
+
+- Good, because simplest setup
+- Good, because unit + component tests cover most logic
+- Bad, because extension loading, manifest correctness, and CSP compliance
+  are never verified automatically
+- Bad, because build breakage can go undetected
+- Bad, because violates the testing pyramid principle
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0006-playwright-e2e.svg :theme neutral
+graph TD
+    subgraph "Testing Pyramid"
+        T1["Tier 1: Vitest (Node)\nUnit tests\nMachines, schema, storage, utils"]
+        T2["Tier 2: Vitest Browser (Chromium)\nComponent tests\nReact components via vitest-browser-react"]
+        T3["Tier 3: Playwright (Chromium)\nE2E smoke tests\nFull extension loaded from dist/"]
+        T4["Tier 4: Manual (Firefox)\nAcceptance testing\nvia about:debugging"]
+    end
+
+    T1 -->|"Fast, no browser"| T2
+    T2 -->|"Real browser, no extension"| T3
+    T3 -->|"Real extension, proxy browser"| T4
+
+    style T1 fill:#e8f5e9
+    style T2 fill:#e3f2fd
+    style T3 fill:#fff3e0
+    style T4 fill:#fce4ec
+#+end_src
+#+RESULTS:
+[[file:./images/0006-playwright-e2e.svg]]

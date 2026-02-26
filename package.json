@@ -1,24 +1,34 @@
 {
   "name": "booktab",
   "version": "0.1.0",
+  "private": true,
   "description": "Firefox new tab book tracker",
-  "type": "module",
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+  "keywords": [
+    "book-tracker",
+    "extension",
+    "firefox"
+  ],
+  "license": "ISC",
+  "author": "",
   "repository": {
     "type": "git",
     "url": "git@github.com-personal:Xavier-Brinon/bug-free-system.git"
   },
-  "keywords": [
-    "firefox",
-    "extension",
-    "book-tracker"
-  ],
-  "author": "",
-  "license": "ISC",
-  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "build": "vite build",
+    "dev": "vite",
+    "lint:ext": "web-ext lint --source-dir dist",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "e2e": "npm run build && npx playwright test"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "@xstate/react": "^6.0.0",
@@ -29,10 +39,21 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@storybook/addon-a11y": "^10.2.13",
+    "@storybook/addon-docs": "^10.2.13",
+    "@storybook/addon-vitest": "^10.2.13",
+    "@storybook/react-vite": "^10.2.13",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/webextension-polyfill": "^0.12.5",
+    "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/coverage-v8": "^4.0.18",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
+    "playwright": "^1.58.2",
+    "storybook": "^10.2.13",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-web-extension": "^4.5.0",
