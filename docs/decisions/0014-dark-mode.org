@@ -1,0 +1,96 @@
+#+title: System-preference dark mode via CSS custom property overrides
+#+author: BookTab
+#+date: [2026-02-27 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab opens on every new tab. Users who prefer dark mode see a bright
+white page flash each time, which is jarring and reduces usability in
+low-light environments. The design token system (ADR-0013) was built
+with dark mode as an explicit readiness goal — semantic tokens reference
+primitives, and dark mode only needs to override the semantic layer.
+
+The question is: how should dark mode be triggered, and what values
+should the dark palette use?
+
+* Decision Drivers
+
+- Respect user preference — the system already declares light/dark via
+  =prefers-color-scheme=; BookTab should honour it
+- Minimal implementation — the token system is already in place
+- No manual toggle needed for v1 — system preference is sufficient
+- Contrast requirements — WCAG AA (4.5:1 for body text, 3:1 for large
+  text and UI elements)
+
+* Considered Options
+
+- *System preference only* (~@media (prefers-color-scheme: dark)~)
+- *Manual toggle* (class-based ~.dark~ on ~<html>~)
+- *Both* (manual toggle with system-preference default)
+
+* Decision Outcome
+
+Chosen option: "System preference only", because it requires zero UI
+changes (no toggle button), zero JavaScript, and zero state management.
+A manual toggle can be added later as a progressive enhancement by
+changing the media query to a class-based override.
+
+** Positive Consequences
+
+- Zero JavaScript — pure CSS implementation
+- Zero component changes — only =App.css= is modified
+- Instant activation — no FOUC (flash of unstyled content)
+- Respects OS-level accessibility settings
+
+** Negative Consequences / Trade-offs
+
+- Users cannot override system preference within BookTab
+- Extension-specific toggle would require future work (class swap +
+  =browser.storage.local= for persistence)
+
+* Dark Palette
+
+Semantic tokens are overridden inside ~@media (prefers-color-scheme: dark)~.
+Only semantic tokens change; primitives and component tokens are unchanged.
+
+| Token              | Light value           | Dark value          |
+|--------------------+-----------------------+---------------------|
+| =--bg-page=        | =--color-gray-50=     | ~#121212~           |
+| =--bg-surface=     | =--color-white=       | ~#1e1e1e~           |
+| =--bg-surface-hover= | =--color-gray-100= | ~#2a2a2a~           |
+| =--bg-accent=      | =--color-gray-950=    | =--color-gray-100=  |
+| =--bg-accent-hover= | =--color-gray-800=  | =--color-gray-200=  |
+| =--text-primary=   | =--color-gray-950=    | =--color-gray-50=   |
+| =--text-secondary= | =--color-gray-600=    | =--color-gray-300=  |
+| =--text-muted=     | =--color-gray-500=    | =--color-gray-500=  |
+| =--text-inverse=   | =--color-white=       | =--color-gray-950=  |
+| =--border-default= | =--color-gray-300=    | ~#444~              |
+| =--border-subtle=  | =--color-gray-200=    | ~#333~              |
+| =--border-strong=  | =--color-gray-950=    | =--color-gray-100=  |
+
+Error and warning colours remain unchanged — red and amber have
+sufficient contrast against both light and dark surface colours.
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0014-dark-mode.svg :theme neutral
+flowchart TD
+    OS["OS / Browser<br/>prefers-color-scheme"]
+    MQ["@media query<br/>(prefers-color-scheme: dark)"]
+    SEM["Semantic tokens<br/>--bg-page, --text-primary, ..."]
+    COMP["Component CSS<br/>(unchanged)"]
+    UI["Rendered UI<br/>(dark or light)"]
+
+    OS --> MQ
+    MQ -->|dark| SEM
+    SEM --> COMP
+    COMP --> UI
+#+end_src
+#+RESULTS:
+[[file:./images/0014-dark-mode.svg]]
