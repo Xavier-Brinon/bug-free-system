@@ -1,0 +1,208 @@
+#+title: Versioned JSON export/import schema for data portability
+#+author: BookTab
+#+date: [2026-02-27 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab stores all user data in ~browser.storage.local~ under a single key
+(=booktab_data=). Users need a way to export their complete library as a
+portable file and import it back -- for backup, migration between browsers,
+or recovery after data loss. The export format must be human-readable,
+self-describing, and safe to import without risking silent data corruption.
+
+Three requirements drive this decision:
+- *DATA-01:* User can export all library data as a JSON file
+- *DATA-02:* User can import library data from a JSON file
+- *DATA-03:* A backup is auto-created before any import overwrites existing data
+
+* Decision Drivers
+
+- Human readability: users should be able to open the file in a text editor
+  and understand the structure
+- Round-trip fidelity: export → import must produce identical data with no
+  silent drops
+- Validation safety: invalid files must be rejected before any data is
+  touched
+- Forward compatibility: the format must support future schema migrations
+- No extra permissions: the export/import mechanism should not require
+  additional browser permissions beyond what the extension already has
+- Simplicity: reuse existing schema definitions rather than inventing a new
+  format
+
+* Considered Options
+
+- *Option A:* Full =BookTabData= export (the storage object as-is)
+- *Option B:* Books-only export (just the books record, no settings or
+  schema version)
+- *Option C:* Custom export format (CSV, XML, or a proprietary structure)
+
+* Decision Outcome
+
+Chosen option: *"Full BookTabData export"* (Option A), because it is the
+simplest approach that preserves complete data fidelity, reuses the existing
+Zod schema for validation, and includes the =schemaVersion= field needed for
+future migrations.
+
+** Export Format
+
+The exported file is the complete =BookTabData= object serialized as
+pretty-printed JSON (~JSON.stringify(data, null, 2)~):
+
+#+begin_example
+{
+  "schemaVersion": 1,
+  "books": {
+    "uuid-1": {
+      "id": "uuid-1",
+      "title": "Dune",
+      "authors": ["Frank Herbert"],
+      "status": "reading",
+      "addedAt": "2026-02-25T10:00:00.000Z",
+      "tags": [],
+      "priority": 0
+    }
+  },
+  "settings": {
+    "defaultView": "current"
+  }
+}
+#+end_example
+
+** Download Mechanism
+
+File downloads use the =Blob= + =URL.createObjectURL= + programmatic
+=<a download>= pattern. This works within the new tab page context and
+requires no additional browser permissions (no =downloads= API needed).
+
+** File Naming Convention
+
+- Export: =booktab-export-YYYY-MM-DD.json=
+- Auto-backup: =booktab-backup-YYYY-MM-DD.json=
+
+Date is derived from =new Date().toISOString().slice(0, 10)=.
+
+** Import Validation
+
+Import validation uses =bookTabDataSchema.safeParse()= from Zod -- the same
+schema that validates data read from storage. This guarantees that any
+successfully imported file conforms to the exact same shape the application
+expects. Validation failures produce user-friendly error messages.
+
+Validation rejects:
+- Non-JSON content (syntax errors)
+- Valid JSON with wrong structure (missing fields, wrong types)
+- Missing =schemaVersion= field
+- Invalid book records (missing required fields)
+
+On validation failure, the existing library is never touched.
+
+** Auto-Backup Before Import (DATA-03)
+
+Before any import overwrites existing data, the current library is
+automatically exported and downloaded as a backup file. The user receives a
+tangible =.json= file in their downloads folder that they can re-import if
+anything goes wrong. This happens after the user confirms the import but
+before the write occurs.
+
+** Explicit Confirmation
+
+After a file is selected and validated, the user sees a preview showing:
+- How many books are in the import file
+- How many books are currently in their library
+- A notice that a backup will be downloaded first
+
+The user must click "Confirm Import" to proceed. This prevents accidental
+overwrites.
+
+** Schema Migration Path
+
+The =schemaVersion= field enables future migrations:
+
+1. On import, read =schemaVersion= from the parsed data
+2. If version < current, apply migration functions in sequence (v1→v2→v3)
+3. Each migration is a pure function: ~(oldData) => newData~
+4. Migrations are applied before Zod validation of the final shape
+5. If migration fails, the import is rejected with an error
+
+Currently =schemaVersion: 1= is the only version. The migration
+infrastructure will be built when the schema actually changes. For now,
+imports that pass =bookTabDataSchema.safeParse()= are accepted as-is.
+
+** Positive Consequences
+
+- Export format is identical to internal storage format -- no translation layer
+- Zod schema reuse means validation is always in sync with the app
+- Human-readable JSON that users can inspect and understand
+- Auto-backup gives users a tangible recovery point
+- =schemaVersion= field is ready for future migrations
+- No additional browser permissions required
+
+** Negative Consequences / Trade-offs
+
+- Full export includes settings (minor -- settings are small and useful to
+  preserve across migrations)
+- Pretty-printed JSON is larger than minified (acceptable -- libraries are
+  small, readability matters more)
+- =<a download>= does not let users choose the save location (acceptable --
+  the file goes to their default downloads folder)
+- Backup download may surprise users who are not expecting a file download
+  (mitigated by the confirmation message explaining it)
+
+* Pros and Cons of the Options
+
+** Option A: Full BookTabData export
+
+- Good, because reuses existing Zod schema for validation (zero new schemas)
+- Good, because preserves =schemaVersion= for forward compatibility
+- Good, because includes settings (complete data portability)
+- Good, because round-trip is trivially verifiable (export → parse → compare)
+- Bad, because exports internal structure directly (coupling -- but the
+  schema is versioned, so this is manageable)
+
+** Option B: Books-only export
+
+- Good, because smaller file size
+- Good, because simpler mental model ("it's just my books")
+- Bad, because loses =schemaVersion= -- no migration path on import
+- Bad, because loses settings -- incomplete data portability
+- Bad, because requires a separate export schema and validation logic
+
+** Option C: Custom export format (CSV, XML, etc.)
+
+- Good, because CSV is widely compatible with spreadsheet tools
+- Bad, because loses nested data (tags arrays, optional fields)
+- Bad, because requires custom serialization and deserialization
+- Bad, because validation is more complex (no Zod reuse)
+- Bad, because CSV cannot represent the full =BookRecord= structure faithfully
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0010-import-flow.svg :theme neutral
+flowchart TD
+    A["User clicks Import"] --> B["Select .json file"]
+    B --> C["Read file content\n(FileReader API)"]
+    C --> D{"JSON.parse\nsucceeds?"}
+    D -->|No| E["Show error:\n'Invalid JSON file'"]
+    D -->|Yes| F{"bookTabDataSchema\n.safeParse()"}
+    F -->|Fail| G["Show error:\nvalidation details"]
+    F -->|Pass| H["Show preview:\n'Replace N books\nwith M books'"]
+    H --> I{"User confirms?"}
+    I -->|Cancel| J["Clear preview\nreturn to data view"]
+    I -->|Confirm| K["Download backup\nof current data"]
+    K --> L["Write imported data\nto storage"]
+    L --> M["Invalidate queries\nrefresh UI"]
+    M --> N["Show success\nmessage"]
+
+    style E fill:#ffcdd2
+    style G fill:#ffcdd2
+    style K fill:#fff9c4
+    style N fill:#c8e6c9
+#+end_src
+#+RESULTS:
+[[file:./images/0010-import-flow.svg]]
