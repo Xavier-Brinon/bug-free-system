@@ -288,3 +288,95 @@ article button:hover {
   color: #fff;
   border-color: #1a1a1a;
 }
+
+/* DataManager */
+.data-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.data-manager section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.data-manager h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.data-manager p {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.data-manager button {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #fff;
+  align-self: flex-start;
+}
+
+.data-manager button:hover {
+  background: #f0f0f0;
+}
+
+.data-export button {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.data-export button:hover {
+  background: #333;
+}
+
+.data-import input[type="file"] {
+  font-size: 0.875rem;
+}
+
+.import-error {
+  padding: 0.75rem;
+  border: 1px solid #e53935;
+  border-radius: 6px;
+  background: #ffebee;
+  color: #c62828;
+}
+
+.import-error p {
+  color: #c62828;
+}
+
+.import-preview {
+  padding: 0.75rem;
+  border: 1px solid #fb8c00;
+  border-radius: 6px;
+  background: #fff8e1;
+}
+
+.import-preview p {
+  color: #e65100;
+}
+
+.import-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.import-actions button:first-child {
+  background: #e53935;
+  color: #fff;
+  border-color: #e53935;
+}
+
+.import-actions button:first-child:hover {
+  background: #c62828;
+}
