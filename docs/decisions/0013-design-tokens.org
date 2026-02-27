@@ -1,0 +1,153 @@
+#+title: CSS custom properties as design token system
+#+author: BookTab
+#+date: [2026-02-27 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Status
+
+Accepted
+
+* Context and Problem Statement
+
+BookTab v1 is feature-complete with all styling in a single =App.css= file
+(383 lines). All values — colors, spacing, typography, border radii — are
+hardcoded throughout. This creates three problems:
+
+1. *Inconsistency* — the same intent (e.g. "secondary text colour") uses
+   different values in different places (=#666=, =#888=, =#555=)
+2. *Unmaintainability* — changing the brand colour means a manual
+   find-and-replace across dozens of rules
+3. *No theming* — dark mode or any theme variant requires duplicating
+   every rule
+
+A design token system would centralise these values and assign semantic
+names, making the stylesheet self-documenting and theme-ready.
+
+* Decision Drivers
+
+- Zero new dependencies — the extension ships as a lightweight new tab page
+- No component file changes — tokens should be a CSS-only concern
+- Dark mode readiness — users expect system-preference dark mode
+- Existing architecture — single CSS file, 9 components, no build-time
+  CSS processing beyond Vite's standard handling
+- Incremental adoption — tokens can be introduced without changing any
+  existing visual output
+
+* Considered Options
+
+- *CSS custom properties* (native ~var()~ references on ~:root~)
+- *CSS-in-JS* (styled-components, Emotion, Vanilla Extract)
+- *Utility-first CSS* (Tailwind CSS)
+
+* Decision Outcome
+
+Chosen option: "CSS custom properties", because they require zero new
+dependencies, zero component changes, work natively in all target browsers
+(Firefox 109+), and unlock dark mode with a single ~@media~ block that
+overrides semantic tokens.
+
+** Positive Consequences
+
+- No runtime cost — custom properties are resolved by the browser engine
+- No build dependency — works with Vite's standard CSS handling
+- Dark mode is a 20-line media query overriding semantic tokens
+- Self-documenting — ~var(--text-secondary)~ is clearer than ~#666~
+- Incremental — can migrate one section at a time without visual regression
+
+** Negative Consequences / Trade-offs
+
+- No compile-time validation — a typo in ~var(--typo)~ silently falls
+  back to the property's inherited value
+- No automatic unused-token detection — manual hygiene required
+- Slightly more verbose than raw values (=var(--space-4)= vs =1rem=)
+
+* Pros and Cons of the Options
+
+** CSS custom properties
+
+- Good, because zero dependencies and zero build changes
+- Good, because native browser feature with excellent performance
+- Good, because dark mode is trivial (~@media (prefers-color-scheme: dark)~)
+- Good, because no component files need to change
+- Bad, because no compile-time typo detection
+- Bad, because no tree-shaking of unused tokens
+
+** CSS-in-JS (styled-components / Emotion / Vanilla Extract)
+
+- Good, because tokens are typed and compile-time checked
+- Good, because co-locates styles with components
+- Bad, because adds a runtime dependency (styled-components/Emotion) or
+  build dependency (Vanilla Extract)
+- Bad, because requires rewriting every component's JSX
+- Bad, because overkill for 9 components in a single CSS file
+
+** Utility-first CSS (Tailwind)
+
+- Good, because rapid prototyping with utility classes
+- Good, because built-in design system with consistent spacing/colours
+- Bad, because requires rewriting every component's className props
+- Bad, because adds a PostCSS build dependency
+- Bad, because fights against the existing semantic-HTML approach
+- Bad, because the generated CSS is harder to read and review
+
+* Token Architecture
+
+The token system uses three layers. Dark mode overrides only the semantic
+layer — primitives and component tokens remain unchanged.
+
+*** Primitives
+
+Raw colour, spacing, and typography values with no semantic meaning.
+Named by scale position (e.g. =--color-gray-600=, =--space-4=).
+
+*** Semantic tokens
+
+Intent-based names that reference primitives. These are used in CSS rules.
+Examples: =--bg-page=, =--text-primary=, =--border-default=.
+
+*** Component tokens (optional)
+
+Repeated component-level patterns extracted for DRY. Only used where the
+same combination appears 3+ times. Examples: =--btn-padding-sm=,
+=--btn-radius=.
+
+* Diagram
+
+#+begin_src mermaid :file ./images/0013-token-layers.svg :theme neutral
+graph TD
+    subgraph Primitives
+        CG50["--color-gray-50<br/>#fafafa"]
+        CG950["--color-gray-950<br/>#1a1a1a"]
+        SP4["--space-4<br/>1rem"]
+        TXB["--text-base<br/>1rem"]
+    end
+
+    subgraph Semantic
+        BGP["--bg-page"]
+        TXP["--text-primary"]
+        S4["(spacing tokens)"]
+        TS["(typography tokens)"]
+    end
+
+    subgraph Component
+        BPS["--btn-padding-sm"]
+        BPM["--btn-padding-md"]
+    end
+
+    CG50 --> BGP
+    CG950 --> TXP
+    SP4 --> S4
+    TXB --> TS
+    S4 --> BPS
+    S4 --> BPM
+
+    subgraph "Dark Mode Override"
+        DK["@media (prefers-color-scheme: dark)"]
+    end
+
+    DK -.->|overrides| BGP
+    DK -.->|overrides| TXP
+#+end_src
+#+RESULTS:
+[[file:./images/0013-token-layers.svg]]
