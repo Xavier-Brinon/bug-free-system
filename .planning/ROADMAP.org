@@ -28,7 +28,7 @@
   new tab; empty and populated states both handled
 - [X] *Phase 5: Queue* -- Want-to-read list is visible and annotatable with
   intention notes
-- [ ] *Phase 6: Data Safety* -- User can export and safely import their
+- [X] *Phase 6: Data Safety* -- User can export and safely import their
   library; no data can be destroyed without a backup
 
 #+begin_src mermaid :file ./images/roadmap-phase-deps.svg :theme neutral
@@ -301,7 +301,12 @@ DATA-01, DATA-02, DATA-03
 
 *** Plans
 
-TBD
+4 plans, 2 waves:
+
+- [X] 06-01-PLAN.md — Tidy-up + ADR-0010 (Versioned JSON export schema) [Wave 1]
+- [X] 06-02-PLAN.md — Export/import utility functions with TDD (unit tests) [Wave 1]
+- [X] 06-03-PLAN.md — DataManager component with TDD (browser tests) [Wave 2]
+- [X] 06-04-PLAN.md — Wire into App.tsx + appMachine + Storybook + Playwright E2E [Wave 2]
 
 * Progress
 
@@ -314,7 +319,7 @@ TBD
 |     3 | Library CRUD                | 0/?            | Not started | --        |
 |     4 | New Tab Display             | 4/4            | Complete    | [2026-02-26 Thu] |
 |     5 | Queue                       | 3/3            | Complete    | [2026-02-26 Thu] |
-|     6 | Data Safety                 | 0/?            | Not started | --        |
+|     6 | Data Safety                 | 4/4            | Complete    | [2026-02-27 Thu] |
 
 * Coverage Map
 
