@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { test, expect, chromium } from "@playwright/test";
 
@@ -225,6 +226,186 @@ test("queue: note persists across page reloads", async () => {
 
   // Clean up
   await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("data: navigate to data view and back", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Wait for dashboard
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Navigate back
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 5000 });
+
+  await context.close();
+});
+
+test("data: export library and verify downloaded file", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Export Test Book");
+  await page.getByLabel("Author(s)").fill("Test Author");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("text=Export Test Book")).toBeVisible({ timeout: 5000 });
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Export — listen for download
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Export Library" }).click(),
+  ]);
+
+  // Verify downloaded file
+  const filePath = await download.path();
+  expect(filePath).toBeTruthy();
+  const content = fs.readFileSync(filePath!, "utf-8");
+  const parsed = JSON.parse(content);
+  expect(parsed.schemaVersion).toBe(1);
+  expect(Object.keys(parsed.books).length).toBe(1);
+  const bookId = Object.keys(parsed.books)[0];
+  expect(parsed.books[bookId].title).toBe("Export Test Book");
+
+  // Clean up
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("data: import valid file restores library", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Create a valid import file
+  const importData = JSON.stringify(
+    {
+      schemaVersion: 1,
+      books: {
+        "imported-1": {
+          id: "imported-1",
+          title: "Imported Book",
+          authors: ["Imported Author"],
+          status: "reading",
+          addedAt: "2026-01-01T00:00:00.000Z",
+          tags: [],
+          priority: 0,
+        },
+      },
+      settings: { defaultView: "current" },
+    },
+    null,
+    2,
+  );
+
+  const tmpFile = path.join(path.resolve("dist"), "test-import.json");
+  fs.writeFileSync(tmpFile, importData);
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Upload the file
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles(tmpFile);
+
+  // Should see preview
+  await expect(page.locator("text=1 books from the import")).toBeVisible({ timeout: 5000 });
+
+  // Confirm import (backup download will trigger)
+  const [backupDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Confirm Import" }).click(),
+  ]);
+  expect(backupDownload).toBeTruthy();
+
+  // Navigate back to dashboard
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+
+  // Verify imported book appears in the hero section (status is "reading")
+  await expect(page.locator(".currently-reading h2", { hasText: "Imported Book" })).toBeVisible({
+    timeout: 5000,
+  });
+
+  // Clean up temp file and book
+  fs.unlinkSync(tmpFile);
+  await page.getByRole("button", { name: "Delete" }).first().click();
+
+  await context.close();
+});
+
+test("data: import invalid file shows error and preserves existing data", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Add a book first so we can verify it's preserved
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Existing Book");
+  await page.getByLabel("Author(s)").fill("Existing Author");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("text=Existing Book")).toBeVisible({ timeout: 5000 });
+
+  // Create an invalid import file
+  const tmpFile = path.join(path.resolve("dist"), "test-invalid.json");
+  fs.writeFileSync(tmpFile, '{"invalid": true}');
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Upload the invalid file
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles(tmpFile);
+
+  // Should see error message
+  await expect(page.locator("text=Invalid BookTab data")).toBeVisible({ timeout: 5000 });
+
+  // No confirm button should be visible
+  await expect(page.getByRole("button", { name: "Confirm Import" })).not.toBeVisible();
+
+  // Navigate back — existing data should be untouched
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Existing Book")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  fs.unlinkSync(tmpFile);
   await page.getByRole("button", { name: "Delete" }).click();
 
   await context.close();

@@ -195,4 +195,70 @@ describe("appMachine", () => {
     expect(actor.getSnapshot().context.editingNoteBookId).toBeNull();
     actor.stop();
   });
+
+  // Data management states
+  it("VIEW_DATA transitions from ready.viewing to ready.viewingData", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    expect(actor.getSnapshot().matches({ ready: "viewingData" })).toBe(true);
+    actor.stop();
+  });
+
+  it("BACK_TO_DASHBOARD transitions from ready.viewingData to ready.viewing", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    actor.send({ type: "BACK_TO_DASHBOARD" });
+    expect(actor.getSnapshot().matches({ ready: "viewing" })).toBe(true);
+    actor.stop();
+  });
+
+  it("IMPORT_VALIDATED stores importPreview in context", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    actor.send({ type: "IMPORT_VALIDATED", importPreview: { bookCount: 3 } });
+    expect(actor.getSnapshot().context.importPreview).toEqual({ bookCount: 3 });
+    expect(actor.getSnapshot().matches({ ready: "viewingData" })).toBe(true);
+    actor.stop();
+  });
+
+  it("IMPORT_FAILED stores importError in context", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    actor.send({ type: "IMPORT_FAILED", error: "Invalid file" });
+    expect(actor.getSnapshot().context.importError).toBe("Invalid file");
+    expect(actor.getSnapshot().matches({ ready: "viewingData" })).toBe(true);
+    actor.stop();
+  });
+
+  it("IMPORT_COMPLETE clears importPreview", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    actor.send({ type: "IMPORT_VALIDATED", importPreview: { bookCount: 3 } });
+    actor.send({ type: "IMPORT_COMPLETE" });
+    expect(actor.getSnapshot().context.importPreview).toBeNull();
+    expect(actor.getSnapshot().matches({ ready: "viewingData" })).toBe(true);
+    actor.stop();
+  });
+
+  it("CLEAR_IMPORT_ERROR clears importError", () => {
+    const actor = createActor(appMachine);
+    actor.start();
+    actor.send({ type: "DATA_LOADED", data: getDefaultData() });
+    actor.send({ type: "VIEW_DATA" });
+    actor.send({ type: "IMPORT_FAILED", error: "Invalid file" });
+    actor.send({ type: "CLEAR_IMPORT_ERROR" });
+    expect(actor.getSnapshot().context.importError).toBeNull();
+    expect(actor.getSnapshot().matches({ ready: "viewingData" })).toBe(true);
+    actor.stop();
+  });
 });

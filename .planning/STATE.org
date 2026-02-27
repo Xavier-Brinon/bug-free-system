@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 5 -- Queue (complete)
+- *Current Focus* :: Phase 6 -- Data Safety (complete) -- ALL PHASES COMPLETE
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
@@ -25,14 +25,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 5: Queue                     |
-| Current Plan     | 05-03 (complete)                   |
-| Phase Status     | Complete (3 plans, 2 waves)        |
-| Overall Progress | 5/6 phases complete                |
+| Current Phase    | Phase 6: Data Safety               |
+| Current Plan     | 06-04 (complete)                   |
+| Phase Status     | Complete (4 plans, 2 waves)        |
+| Overall Progress | 6/6 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████████████████████] 83%
-Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [████] → Phase 6 [░░░░]
+Progress: [████████████████████] 100%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [████] → Phase 6 [████]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -45,18 +45,18 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 |     3 | Library CRUD                | LIB-01--04              | Complete    |
 |     4 | New Tab Display             | DISP-01--03             | Complete    |
 |     5 | Queue                       | QUEUE-01--02            | Complete    |
-|     6 | Data Safety                 | DATA-01--03             | Not started |
+|     6 | Data Safety                 | DATA-01--03             | Complete    |
 
 * Performance Metrics
 
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 5 / 6  |
-| Requirements met | 22 / 25 |
-| Plans executed   | 19     |
-| ADRs written     | 10     |
-| Tests passing    | 124    |
+| Phases complete  | 6 / 6  |
+| Requirements met | 25 / 25 |
+| Plans executed   | 23     |
+| ADRs written     | 11     |
+| Tests passing    | 157    |
 
 * Accumulated Context
 
@@ -169,7 +169,7 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 | 0007   | XState v5 state management         | 2             | Written |
 | 0008   | browser.storage.local only         | 2             | Written |
 | 0009   | Open Library API                   | 3             | Pending |
-| 0010   | Versioned JSON export schema       | 6             | Pending |
+| 0010   | Versioned JSON export schema       | 6             | Written |
 | 0011   | Oxc (Oxlint + Oxfmt) for linting   | 2             | Written |
 | 0012   | Vitest browser mode (supersedes 0001) | 1          | Written |
 
@@ -196,7 +196,7 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - [X] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
 - [X] Write ADR-0011 (Oxc: Oxlint + Oxfmt) -- Phase 2, before any code
 - [ ] Write ADR-0009 (Open Library API) -- Phase 3, before search feature
-- [ ] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
+- [X] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
 - [X] Scaffold extension with =vite-plugin-web-extension= -- Phase 2 (Plan 02-02)
 - [X] Lock data schema in =schema.ts= before any feature code -- Phase 2 (Plan 02-03)
 - [X] Install Oxlint + Oxfmt for code quality -- Phase 2 (Plan 02-01)
@@ -210,21 +210,20 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 5 complete: 3 plans executed across
-  2 waves. QueueList component filters and displays want_to_read books.
-  QueueNoteEditor allows adding/editing intention notes. BookCard displays
-  queueNote when present. appMachine extended with viewingQueue and editingNote
-  states. Queue navigation and note editing wired into App.tsx. Storybook stories
-  for all new components. 3 new Playwright E2E tests for queue workflows.
-  124 tests passing (51 unit + 48 browser + 25 storybook + 7 E2E).
-- *Next action* :: Plan and execute Phase 6 (Data Safety).
-- *Context for next session* :: Phase 5 is complete on =main=. The app now has
-  a dedicated queue view accessible from the dashboard (View Queue button).
-  Users can see all want_to_read books, add/edit intention notes that persist,
-  and navigate back to the dashboard. All CRUD and display features from
-  Phases 3-4 still work. Phase 6 (Data Safety) adds JSON export/import
-  with auto-backup. ADR-0010 needs to be written first.
+- *Last action* :: [2026-02-27 Thu] -- Phase 6 complete: 4 plans executed across
+  2 waves. ADR-0010 written for versioned JSON export schema. data-safety.ts
+  utility functions (exportToJson, parseImportFile, triggerDownload, filename
+  generators). DataManager component for export/import UI with validation
+  feedback and explicit confirmation. appMachine extended with viewingData
+  state and import flow events. Export/import wired into App.tsx. Storybook
+  stories for DataManager. 4 new Playwright E2E tests for data workflows.
+  157 tests passing (67 unit + 60 browser + 30 storybook + 11 E2E).
+- *Next action* :: All v1 phases complete. Project is feature-complete for v1.
+- *Context for next session* :: All 6 phases complete on =main=. 25/25 v1
+  requirements met. The app supports: CRUD operations on books, currently-reading
+  hero display, queue view with intention notes, and data export/import with
+  auto-backup. All tests passing, build clean, lint clean.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
-/Updated: [2026-02-26 Thu] -- Phase 4 complete: 4 plans executed, dashboard layout built, 100 tests passing/
+/Updated: [2026-02-27 Thu] -- Phase 6 complete: ALL v1 PHASES COMPLETE. 6/6 phases, 25/25 requirements, 157 tests passing/

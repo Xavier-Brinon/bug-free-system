@@ -172,6 +172,48 @@ export const DashboardWithQueue: Story = {
 };
 
 /**
+ * Data view — App in ready.viewingData state. Since we cannot directly
+ * set the XState machine state from a story, we seed data and the user
+ * would click "Data" to navigate here. This story starts at the dashboard
+ * with some books so the user can click through to the data view.
+ */
+export const DataManagement: Story = {
+  decorators: [
+    (Story) => {
+      const dataWithBooks: BookTabData = {
+        ...getDefaultData(),
+        books: {
+          "book-1": {
+            id: "book-1",
+            title: "Dune",
+            authors: ["Frank Herbert"],
+            status: "reading",
+            addedAt: "2026-01-15T10:00:00Z",
+            tags: [],
+            priority: 0,
+          },
+          "book-2": {
+            id: "book-2",
+            title: "Neuromancer",
+            authors: ["William Gibson"],
+            status: "want_to_read",
+            addedAt: "2026-02-01T12:00:00Z",
+            tags: [],
+            priority: 0,
+          },
+        },
+      };
+      const queryClient = createSeededClient(dataWithBooks);
+      return (
+        <QueryClientProvider client={queryClient}>
+          <Story />
+        </QueryClientProvider>
+      );
+    },
+  ],
+};
+
+/**
  * Error state when storage read fails. We pre-set an error on the query
  * so the App component sees isError immediately.
  */
