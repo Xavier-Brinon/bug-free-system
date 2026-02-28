@@ -93,6 +93,8 @@ button,
 input,
 select,
 textarea {
+  color: inherit;
+  background: var(--bg-surface);
   transition:
     background var(--transition-fast),
     border-color var(--transition-fast),
@@ -346,7 +348,7 @@ article button:hover {
 /* Queue note */
 .queue-note {
   font-style: italic;
-  color: var(--color-gray-700);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   padding: var(--space-1) 0;
 }
@@ -485,12 +487,20 @@ article button:hover {
     --bg-surface-hover: #2a2a2a;
     --bg-accent: var(--color-gray-100);
     --bg-accent-hover: var(--color-gray-200);
+    --bg-danger: #d32f2f;
+    --bg-danger-hover: #b71c1c;
+    --bg-error: #2c1515;
+    --bg-warning: #2c2010;
     --text-primary: var(--color-gray-50);
     --text-secondary: var(--color-gray-300);
-    --text-muted: var(--color-gray-500);
+    --text-muted: #aaa;
     --text-inverse: var(--color-gray-950);
+    --text-error: #ef9a9a;
+    --text-warning: #ffcc80;
     --border-default: #444;
     --border-subtle: #333;
     --border-strong: var(--color-gray-100);
+    --border-error: #d32f2f;
+    --border-warning: #f57c00;
   }
 }
