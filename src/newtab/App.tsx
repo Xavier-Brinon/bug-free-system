@@ -10,6 +10,19 @@ import type { BookTabData, BookRecord, BookStatus } from "../schema";
 import type { BookFormData } from "../components/BookForm";
 import { BookForm } from "../components/BookForm";
 import { BookList } from "../components/BookList";
+import { CurrentlyReading } from "../components/CurrentlyReading";
+import { EmptyHero } from "../components/EmptyHero";
+import { QueueCount } from "../components/QueueCount";
+import { QueueList } from "../components/QueueList";
+import { QueueNoteEditor } from "../components/QueueNoteEditor";
+import { DataManager } from "../components/DataManager";
+import {
+  exportToJson,
+  parseImportFile,
+  triggerDownload,
+  generateExportFilename,
+  generateBackupFilename,
+} from "../data-safety";
 
 export function App() {
   const [state, send] = useMachine(appMachine);
@@ -120,6 +133,81 @@ export function App() {
     [send],
   );
 
+  const handleSaveNote = useCallback(
+    async (bookId: string, note: string) => {
+      const actor = libraryActorRef.current;
+      if (!actor) return;
+      actor.send({
+        type: "UPDATE_BOOK",
+        id: bookId,
+        updates: { queueNote: note },
+      });
+      await persistAndInvalidate(actor.getSnapshot().context.books);
+      send({ type: "NOTE_SAVED" });
+    },
+    [persistAndInvalidate, send],
+  );
+
+  // Ref to hold validated import data between validation and confirmation
+  const pendingImportDataRef = useRef<BookTabData | null>(null);
+
+  const handleExport = useCallback(async () => {
+    const currentData = await loadBookTabData();
+    const json = exportToJson(currentData);
+    triggerDownload(json, generateExportFilename());
+  }, []);
+
+  const handleFileSelected = useCallback(
+    (content: string) => {
+      const result = parseImportFile(content);
+      if (!result.success) {
+        pendingImportDataRef.current = null;
+        send({ type: "IMPORT_FAILED", error: result.error });
+        return;
+      }
+      pendingImportDataRef.current = result.data;
+      send({
+        type: "IMPORT_VALIDATED",
+        importPreview: { bookCount: Object.keys(result.data.books).length },
+      });
+    },
+    [send],
+  );
+
+  const handleConfirmImport = useCallback(async () => {
+    const importData = pendingImportDataRef.current;
+    if (!importData) return;
+
+    // Auto-backup current data before overwriting
+    const currentData = await loadBookTabData();
+    const backupJson = exportToJson(currentData);
+    triggerDownload(backupJson, generateBackupFilename());
+
+    // Write imported data to storage
+    await saveBookTabData(importData);
+
+    // Reinitialize library actor with new books
+    if (libraryActorRef.current) {
+      libraryActorRef.current.stop();
+    }
+    const actor = createActor(libraryMachine, {
+      input: { books: importData.books },
+    });
+    actor.start();
+    libraryActorRef.current = actor;
+
+    // Refresh UI
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    pendingImportDataRef.current = null;
+    send({ type: "IMPORT_COMPLETE" });
+  }, [queryClient, send]);
+
+  const handleCancelImport = useCallback(() => {
+    pendingImportDataRef.current = null;
+    send({ type: "CLEAR_IMPORT_ERROR" });
+    send({ type: "IMPORT_COMPLETE" });
+  }, [send]);
+
   if (state.matches("loading")) {
     return (
       <div className="app">
@@ -167,12 +255,106 @@ export function App() {
     );
   }
 
+  // ready.viewingQueue
+  if (state.matches({ ready: "viewingQueue" })) {
+    const books = state.context.data?.books ?? {};
+
+    return (
+      <div className="app">
+        <h1>BookTab</h1>
+        <button type="button" onClick={() => send({ type: "BACK_TO_DASHBOARD" })}>
+          Back to Dashboard
+        </button>
+        <h2>Your Queue</h2>
+        <QueueList
+          books={books}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+          onEditNote={(id) => send({ type: "EDIT_NOTE", bookId: id })}
+        />
+        <button type="button" onClick={() => send({ type: "START_ADD" })}>
+          Add Book
+        </button>
+      </div>
+    );
+  }
+
+  // ready.editingNote
+  if (state.matches({ ready: "editingNote" })) {
+    const noteBookId = state.context.editingNoteBookId;
+    const noteBook = noteBookId ? state.context.data?.books[noteBookId] : null;
+
+    return (
+      <div className="app">
+        <h1>BookTab</h1>
+        <h2>Edit Note</h2>
+        {noteBook && <p>{noteBook.title}</p>}
+        <QueueNoteEditor
+          bookId={noteBookId ?? ""}
+          initialNote={noteBook?.queueNote ?? ""}
+          onSave={handleSaveNote}
+          onCancel={() => send({ type: "CANCEL_NOTE" })}
+        />
+      </div>
+    );
+  }
+
+  // ready.viewingData
+  if (state.matches({ ready: "viewingData" })) {
+    const books = state.context.data?.books ?? {};
+
+    return (
+      <div className="app">
+        <h1>BookTab</h1>
+        <button type="button" onClick={() => send({ type: "BACK_TO_DASHBOARD" })}>
+          Back to Dashboard
+        </button>
+        <h2>Your Data</h2>
+        <DataManager
+          onExport={handleExport}
+          onFileSelected={handleFileSelected}
+          onConfirmImport={handleConfirmImport}
+          onCancelImport={handleCancelImport}
+          importError={state.context.importError}
+          importPreview={state.context.importPreview}
+          currentBookCount={Object.keys(books).length}
+        />
+      </div>
+    );
+  }
+
   // ready.viewing (default)
   const books = state.context.data?.books ?? {};
+  const allBooks = Object.values(books);
+  const currentlyReading =
+    allBooks
+      .filter((b) => b.status === "reading")
+      .sort((a, b) => a.addedAt.localeCompare(b.addedAt))[0] ?? null;
+  const queueCount = allBooks.filter((b) => b.status === "want_to_read").length;
 
   return (
     <div className="app">
       <h1>BookTab</h1>
+      <section className="hero-section">
+        {currentlyReading ? (
+          <CurrentlyReading
+            book={currentlyReading}
+            onStatusChange={handleStatusChange}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <EmptyHero onStartAdding={() => send({ type: "START_ADD" })} />
+        )}
+      </section>
+      <QueueCount count={queueCount} />
+      <button type="button" onClick={() => send({ type: "VIEW_QUEUE" })}>
+        View Queue
+      </button>
+      <button type="button" onClick={() => send({ type: "VIEW_DATA" })}>
+        Data
+      </button>
       <button type="button" onClick={() => send({ type: "START_ADD" })}>
         Add Book
       </button>

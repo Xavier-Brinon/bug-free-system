@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { test, expect, chromium } from "@playwright/test";
 
@@ -47,6 +48,365 @@ test("CRUD flow: add a book, verify it appears, delete it", async () => {
 
   // Verify the book is removed and empty state returns
   await expect(page.locator("text=No books yet")).toBeVisible({ timeout: 5000 });
+
+  await context.close();
+});
+
+test("dashboard: empty state shows EmptyHero, queue count shows 0", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Empty state: EmptyHero should be visible
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Queue count should show 0
+  await expect(page.locator("text=0 books to read")).toBeVisible();
+
+  await context.close();
+});
+
+test("dashboard: hero display updates when book status changes", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Start with empty state
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Add a book — defaults to want_to_read
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Dune");
+  await page.getByLabel("Author(s)").fill("Frank Herbert");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Book added — queue count should show 1
+  await expect(page.locator("text=1 book to read")).toBeVisible({ timeout: 5000 });
+
+  // EmptyHero should still be visible (no book is "reading" yet)
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible();
+
+  // Change status to "reading" via the BookCard select
+  await page.getByRole("combobox", { name: "Status" }).selectOption("reading");
+
+  // Hero should now show the book title prominently (h2 in the hero section)
+  await expect(page.locator(".currently-reading h2", { hasText: "Dune" })).toBeVisible({
+    timeout: 5000,
+  });
+
+  // Queue count should now be 0
+  await expect(page.locator("text=0 books to read")).toBeVisible();
+
+  // Mark as Read via the hero button
+  await page.getByRole("button", { name: "Mark as Read" }).click();
+
+  // Empty state should return
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 5000 });
+
+  // Clean up — delete the book
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("queue: navigate to queue view and see queued books", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book (defaults to want_to_read)
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Neuromancer");
+  await page.getByLabel("Author(s)").fill("William Gibson");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue view
+  await page.getByRole("button", { name: "View Queue" }).click();
+
+  // Verify queue heading and book visible
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+  await expect(page.locator("text=Neuromancer")).toBeVisible();
+
+  // Navigate back to dashboard
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("queue: add an intention note to a queued book", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Snow Crash");
+  await page.getByLabel("Author(s)").fill("Neal Stephenson");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue view
+  await page.getByRole("button", { name: "View Queue" }).click();
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+
+  // Click Edit Note
+  await page.getByRole("button", { name: "Edit Note" }).click();
+
+  // Type a note
+  await expect(page.locator("text=Edit Note")).toBeVisible({ timeout: 5000 });
+  await page.getByRole("textbox").fill("Recommended by a colleague");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Verify note is visible in queue view
+  await expect(page.locator("text=Recommended by a colleague")).toBeVisible({ timeout: 5000 });
+
+  // Clean up — go back, delete
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("queue: note persists across page reloads", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("The Dispossessed");
+  await page.getByLabel("Author(s)").fill("Ursula K. Le Guin");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Navigate to queue, add a note
+  await page.getByRole("button", { name: "View Queue" }).click();
+  await expect(page.locator("text=Your Queue")).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Edit Note" }).click();
+  await page.getByRole("textbox").fill("Explores anarchist society");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  // Verify note is there
+  await expect(page.locator("text=Explores anarchist society")).toBeVisible({ timeout: 5000 });
+
+  // Reload the page
+  await page.reload();
+
+  // Navigate to queue again after reload
+  await expect(page.locator("text=BookTab")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "View Queue" }).click();
+
+  // Note should persist
+  await expect(page.locator("text=Explores anarchist society")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("data: navigate to data view and back", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Wait for dashboard
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Navigate back
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 5000 });
+
+  await context.close();
+});
+
+test("data: export library and verify downloaded file", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+
+  // Add a book
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Export Test Book");
+  await page.getByLabel("Author(s)").fill("Test Author");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("text=Export Test Book")).toBeVisible({ timeout: 5000 });
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Export — listen for download
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Export Library" }).click(),
+  ]);
+
+  // Verify downloaded file
+  const filePath = await download.path();
+  expect(filePath).toBeTruthy();
+  const content = fs.readFileSync(filePath!, "utf-8");
+  const parsed = JSON.parse(content);
+  expect(parsed.schemaVersion).toBe(1);
+  expect(Object.keys(parsed.books).length).toBe(1);
+  const bookId = Object.keys(parsed.books)[0];
+  expect(parsed.books[bookId].title).toBe("Export Test Book");
+
+  // Clean up
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await context.close();
+});
+
+test("data: import valid file restores library", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Create a valid import file
+  const importData = JSON.stringify(
+    {
+      schemaVersion: 1,
+      books: {
+        "imported-1": {
+          id: "imported-1",
+          title: "Imported Book",
+          authors: ["Imported Author"],
+          status: "reading",
+          addedAt: "2026-01-01T00:00:00.000Z",
+          tags: [],
+          priority: 0,
+        },
+      },
+      settings: { defaultView: "current" },
+    },
+    null,
+    2,
+  );
+
+  const tmpFile = path.join(path.resolve("dist"), "test-import.json");
+  fs.writeFileSync(tmpFile, importData);
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Upload the file
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles(tmpFile);
+
+  // Should see preview
+  await expect(page.locator("text=1 books from the import")).toBeVisible({ timeout: 5000 });
+
+  // Confirm import (backup download will trigger)
+  const [backupDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Confirm Import" }).click(),
+  ]);
+  expect(backupDownload).toBeTruthy();
+
+  // Navigate back to dashboard
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+
+  // Verify imported book appears in the hero section (status is "reading")
+  await expect(page.locator(".currently-reading h2", { hasText: "Imported Book" })).toBeVisible({
+    timeout: 5000,
+  });
+
+  // Clean up temp file and book
+  fs.unlinkSync(tmpFile);
+  await page.getByRole("button", { name: "Delete" }).first().click();
+
+  await context.close();
+});
+
+test("data: import invalid file shows error and preserves existing data", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: [`--disable-extensions-except=${DIST_PATH}`, `--load-extension=${DIST_PATH}`],
+  });
+
+  const page = await context.newPage();
+  await page.goto("chrome://newtab");
+  await expect(page.locator("text=Nothing on the nightstand")).toBeVisible({ timeout: 10000 });
+
+  // Add a book first so we can verify it's preserved
+  await page.getByRole("button", { name: "Add Book" }).click();
+  await page.getByLabel("Title").fill("Existing Book");
+  await page.getByLabel("Author(s)").fill("Existing Author");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("text=Existing Book")).toBeVisible({ timeout: 5000 });
+
+  // Create an invalid import file
+  const tmpFile = path.join(path.resolve("dist"), "test-invalid.json");
+  fs.writeFileSync(tmpFile, '{"invalid": true}');
+
+  // Navigate to data view
+  await page.getByRole("button", { name: "Data" }).click();
+  await expect(page.locator("text=Your Data")).toBeVisible({ timeout: 5000 });
+
+  // Upload the invalid file
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles(tmpFile);
+
+  // Should see error message
+  await expect(page.locator("text=Invalid BookTab data")).toBeVisible({ timeout: 5000 });
+
+  // No confirm button should be visible
+  await expect(page.getByRole("button", { name: "Confirm Import" })).not.toBeVisible();
+
+  // Navigate back — existing data should be untouched
+  await page.getByRole("button", { name: "Back to Dashboard" }).click();
+  await expect(page.locator("text=Existing Book")).toBeVisible({ timeout: 5000 });
+
+  // Clean up
+  fs.unlinkSync(tmpFile);
+  await page.getByRole("button", { name: "Delete" }).click();
 
   await context.close();
 });

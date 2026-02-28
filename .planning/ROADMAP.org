@@ -24,11 +24,11 @@
   smoke test infrastructure, and all critical pitfalls pre-empted
 - [ ] *Phase 3: Library CRUD* -- User can add, edit, delete, and change the
   status of books; the core data loop works end-to-end
-- [ ] *Phase 4: New Tab Display* -- Current book is shown prominently on every
+- [X] *Phase 4: New Tab Display* -- Current book is shown prominently on every
   new tab; empty and populated states both handled
-- [ ] *Phase 5: Queue* -- Want-to-read list is visible and annotatable with
+- [X] *Phase 5: Queue* -- Want-to-read list is visible and annotatable with
   intention notes
-- [ ] *Phase 6: Data Safety* -- User can export and safely import their
+- [X] *Phase 6: Data Safety* -- User can export and safely import their
   library; no data can be destroyed without a backup
 
 #+begin_src mermaid :file ./images/roadmap-phase-deps.svg :theme neutral
@@ -219,7 +219,12 @@ DISP-01, DISP-02, DISP-03
 
 *** Plans
 
-TBD
+4 plans, 2 waves:
+
+- [X] 04-01-PLAN.md — Tidy-up + CurrentlyReading hero component (TDD, browser tests) [Wave 1]
+- [X] 04-02-PLAN.md — EmptyHero + QueueCount components (TDD, browser tests) [Wave 1]
+- [X] 04-03-PLAN.md — Wire dashboard layout into App.tsx (CurrentlyReading/EmptyHero + QueueCount + BookList) [Wave 2]
+- [X] 04-04-PLAN.md — Storybook stories for new components + App dashboard states + Playwright E2E [Wave 2]
 
 ** Phase 5: Queue
 :PROPERTIES:
@@ -251,7 +256,11 @@ QUEUE-01, QUEUE-02
 
 *** Plans
 
-TBD
+3 plans, 2 waves:
+
+- [X] 05-01-PLAN.md — Tidy-up + QueueList component (TDD, browser tests) [Wave 1]
+- [X] 05-02-PLAN.md — QueueNoteEditor component + BookCard queueNote display (TDD, browser tests) [Wave 1]
+- [X] 05-03-PLAN.md — Wire queue into App.tsx + appMachine states + Storybook stories + Playwright E2E [Wave 2]
 
 ** Phase 6: Data Safety
 :PROPERTIES:
@@ -292,7 +301,12 @@ DATA-01, DATA-02, DATA-03
 
 *** Plans
 
-TBD
+4 plans, 2 waves:
+
+- [X] 06-01-PLAN.md — Tidy-up + ADR-0010 (Versioned JSON export schema) [Wave 1]
+- [X] 06-02-PLAN.md — Export/import utility functions with TDD (unit tests) [Wave 1]
+- [X] 06-03-PLAN.md — DataManager component with TDD (browser tests) [Wave 2]
+- [X] 06-04-PLAN.md — Wire into App.tsx + appMachine + Storybook + Playwright E2E [Wave 2]
 
 * Progress
 
@@ -303,9 +317,9 @@ TBD
 |     1 | Tooling & Practice          | 3/3            | Complete    | [2026-02-26 Thu] |
 |     2 | Extension Scaffold          | 0/?            | Not started | --        |
 |     3 | Library CRUD                | 0/?            | Not started | --        |
-|     4 | New Tab Display             | 0/?            | Not started | --        |
-|     5 | Queue                       | 0/?            | Not started | --        |
-|     6 | Data Safety                 | 0/?            | Not started | --        |
+|     4 | New Tab Display             | 4/4            | Complete    | [2026-02-26 Thu] |
+|     5 | Queue                       | 3/3            | Complete    | [2026-02-26 Thu] |
+|     6 | Data Safety                 | 4/4            | Complete    | [2026-02-27 Thu] |
 
 * Coverage Map
 

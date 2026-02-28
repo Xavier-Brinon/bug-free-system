@@ -5,6 +5,9 @@ type AppContext = {
   data: BookTabData | null;
   error: string | null;
   editingBookId: string | null;
+  editingNoteBookId: string | null;
+  importError: string | null;
+  importPreview: { bookCount: number } | null;
 };
 
 type AppEvent =
@@ -14,7 +17,17 @@ type AppEvent =
   | { type: "START_ADD" }
   | { type: "START_EDIT"; bookId: string }
   | { type: "CANCEL_FORM" }
-  | { type: "BOOK_SAVED" };
+  | { type: "BOOK_SAVED" }
+  | { type: "VIEW_QUEUE" }
+  | { type: "BACK_TO_DASHBOARD" }
+  | { type: "EDIT_NOTE"; bookId: string }
+  | { type: "NOTE_SAVED" }
+  | { type: "CANCEL_NOTE" }
+  | { type: "VIEW_DATA" }
+  | { type: "IMPORT_VALIDATED"; importPreview: { bookCount: number } }
+  | { type: "IMPORT_FAILED"; error: string }
+  | { type: "IMPORT_COMPLETE" }
+  | { type: "CLEAR_IMPORT_ERROR" };
 
 export const appMachine = setup({
   types: {
@@ -28,6 +41,9 @@ export const appMachine = setup({
     data: null,
     error: null,
     editingBookId: null,
+    editingNoteBookId: null,
+    importError: null,
+    importPreview: null,
   },
   states: {
     loading: {
@@ -66,6 +82,8 @@ export const appMachine = setup({
                 editingBookId: ({ event }) => event.bookId,
               }),
             },
+            VIEW_QUEUE: { target: "viewingQueue" },
+            VIEW_DATA: { target: "viewingData" },
           },
         },
         adding: {
@@ -86,6 +104,67 @@ export const appMachine = setup({
               target: "viewing",
               actions: assign({
                 editingBookId: () => null,
+              }),
+            },
+          },
+        },
+        viewingQueue: {
+          on: {
+            BACK_TO_DASHBOARD: { target: "viewing" },
+            EDIT_NOTE: {
+              target: "editingNote",
+              actions: assign({
+                editingNoteBookId: ({ event }) => event.bookId,
+              }),
+            },
+            START_ADD: { target: "adding" },
+          },
+        },
+        editingNote: {
+          on: {
+            NOTE_SAVED: {
+              target: "viewingQueue",
+              actions: assign({
+                editingNoteBookId: () => null,
+              }),
+            },
+            CANCEL_NOTE: {
+              target: "viewingQueue",
+              actions: assign({
+                editingNoteBookId: () => null,
+              }),
+            },
+          },
+        },
+        viewingData: {
+          on: {
+            BACK_TO_DASHBOARD: {
+              target: "viewing",
+              actions: assign({
+                importError: () => null,
+                importPreview: () => null,
+              }),
+            },
+            IMPORT_VALIDATED: {
+              actions: assign({
+                importPreview: ({ event }) => event.importPreview,
+                importError: () => null,
+              }),
+            },
+            IMPORT_FAILED: {
+              actions: assign({
+                importError: ({ event }) => event.error,
+                importPreview: () => null,
+              }),
+            },
+            IMPORT_COMPLETE: {
+              actions: assign({
+                importPreview: () => null,
+              }),
+            },
+            CLEAR_IMPORT_ERROR: {
+              actions: assign({
+                importError: () => null,
               }),
             },
           },

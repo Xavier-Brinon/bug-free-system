@@ -8,7 +8,7 @@
 
 - *Core Value* :: Every new tab is a reminder of what you're reading and
   what's next — keeping your reading life visible without leaving the browser.
-- *Current Focus* :: Phase 3 -- Library CRUD (complete)
+- *Current Focus* :: Phase 7 -- Design System Polish (complete)
 - *Stack* :: TypeScript 5.9.3 + Vite 7.3.1 + =vite-plugin-web-extension= +
   React 19 + ~@xstate/react~ + XState v5 + TanStack Query +
   ~browser.storage.local~ + Vitest browser mode (Playwright/Chromium) +
@@ -25,14 +25,14 @@ See: [[file:PROJECT.org][PROJECT.org]] (updated [2026-02-26 Thu])
 #+CAPTION: Current position
 | Field            | Value                              |
 |------------------+------------------------------------|
-| Current Phase    | Phase 3: Library CRUD              |
-| Current Plan     | 03-04 (complete)                   |
-| Phase Status     | Complete (4 plans, 3 waves)        |
-| Overall Progress | 3/6 phases complete                |
+| Current Phase    | Phase 7: Design System Polish      |
+| Current Plan     | Wave 4 (complete)                  |
+| Phase Status     | Complete (4 waves)                 |
+| Overall Progress | 7/7 phases complete                |
 
 #+BEGIN_EXAMPLE
-Progress: [████████████░░░░░░░░] 50%
-Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [░░░░] → Phase 5 [░░░░] → Phase 6 [░░░░]
+Progress: [████████████████████] 100%
+Phase 1 [████] → Phase 2 [████] → Phase 3 [████] → Phase 4 [████] → Phase 5 [████] → Phase 6 [████] → Phase 7 [████]
 #+END_EXAMPLE
 
 * Phase Summary
@@ -43,20 +43,21 @@ Phase 1 [████] → Phase 2 [████] → Phase 3 [████] →
 |     1 | Tooling & Practice          | ADR-01--03, DEV-01--06  | Complete    |
 |     2 | Extension Scaffold          | CORE-01--04             | Complete    |
 |     3 | Library CRUD                | LIB-01--04              | Complete    |
-|     4 | New Tab Display             | DISP-01--03             | Not started |
-|     5 | Queue                       | QUEUE-01--02            | Not started |
-|     6 | Data Safety                 | DATA-01--03             | Not started |
+|     4 | New Tab Display             | DISP-01--03             | Complete    |
+|     5 | Queue                       | QUEUE-01--02            | Complete    |
+|     6 | Data Safety                 | DATA-01--03             | Complete    |
+|     7 | Design System Polish        | (polish pass)           | Complete    |
 
 * Performance Metrics
 
 #+CAPTION: Project metrics
 | Metric           | Value  |
 |------------------+--------|
-| Phases complete  | 3 / 6  |
-| Requirements met | 17 / 25 |
-| Plans executed   | 12     |
-| ADRs written     | 10     |
-| Tests passing    | 81     |
+| Phases complete  | 7 / 7  |
+| Requirements met | 25 / 25 |
+| Plans executed   | 23     |
+| ADRs written     | 13     |
+| Tests passing    | 162    |
 
 * Accumulated Context
 
@@ -169,9 +170,11 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 | 0007   | XState v5 state management         | 2             | Written |
 | 0008   | browser.storage.local only         | 2             | Written |
 | 0009   | Open Library API                   | 3             | Pending |
-| 0010   | Versioned JSON export schema       | 6             | Pending |
+| 0010   | Versioned JSON export schema       | 6             | Written |
 | 0011   | Oxc (Oxlint + Oxfmt) for linting   | 2             | Written |
 | 0012   | Vitest browser mode (supersedes 0001) | 1          | Written |
+| 0013   | CSS custom properties as design tokens | 7         | Written |
+| 0014   | System-preference dark mode          | 7             | Written |
 
 ** Open questions
 
@@ -196,7 +199,7 @@ All other files -- =REQUIREMENTS.org=, =ROADMAP.org=, =STATE.org=,
 - [X] Write ADR-0008 (browser.storage.local) -- Phase 2, before storage layer
 - [X] Write ADR-0011 (Oxc: Oxlint + Oxfmt) -- Phase 2, before any code
 - [ ] Write ADR-0009 (Open Library API) -- Phase 3, before search feature
-- [ ] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
+- [X] Write ADR-0010 (Versioned JSON export schema) -- Phase 6, before export feature
 - [X] Scaffold extension with =vite-plugin-web-extension= -- Phase 2 (Plan 02-02)
 - [X] Lock data schema in =schema.ts= before any feature code -- Phase 2 (Plan 02-03)
 - [X] Install Oxlint + Oxfmt for code quality -- Phase 2 (Plan 02-01)
@@ -210,20 +213,21 @@ None.
 
 * Session Continuity
 
-- *Last action* :: [2026-02-26 Thu] -- Phase 3 complete: 4 plans executed across
-  3 waves. Library CRUD implemented with BookForm (add/edit), BookCard (display
-  + actions), BookList (collection + empty state), libraryMachine (XState v5
-  CRUD), and appMachine extended with ready sub-states (viewing/adding/editing).
-  Full integration in App.tsx with persistence to browser.storage.local.
-  Storybook stories for all components. E2E test for add-list-delete flow.
-  81 tests passing (46 unit + 20 browser + 12 storybook + 2 E2E + 1 lint check).
-- *Next action* :: Plan and execute Phase 4 (New Tab Display).
-- *Context for next session* :: Phase 3 is complete on =main=. The extension
-  supports full CRUD: add books, edit details, change reading status, delete
-  books. All changes persist to browser.storage.local. Phase 4 (New Tab Display)
-  adds the reading dashboard: currently reading, reading queue, and reading
-  history views. Plans for Phase 4 need to be created.
+- *Last action* :: [2026-02-27 Thu] -- Phase 7 complete: Design system polish
+  pass across 4 waves. ADR-0013 (CSS custom properties as design tokens) and
+  ADR-0014 (system-preference dark mode). Three-layer token system (primitives,
+  semantic, component). All hardcoded CSS values migrated to =var()= references.
+  Global interactive states: =:focus-visible= with outline offset, =:active=
+  scale feedback, consistent transitions on all interactive elements. Dark mode
+  via =@media (prefers-color-scheme: dark)= overriding semantic tokens.
+  162 tests passing (67 unit + 65 browser + 30 storybook + 11 E2E).
+- *Next action* :: All phases complete. Project is feature-complete with polish.
+- *Context for next session* :: All 7 phases complete on =main=. 25/25 v1
+  requirements met plus design system polish. The app supports: CRUD operations
+  on books, currently-reading hero display, queue view with intention notes,
+  data export/import with auto-backup, design token system, interactive states,
+  and system-preference dark mode. All tests passing, build clean, lint clean.
 
 ---
 /STATE initialized: [2026-02-25 Tue]/
-/Updated: [2026-02-26 Thu] -- Phase 2 complete: 5 plans executed, 4 ADRs written, extension scaffold built, 23 tests passing/
+/Updated: [2026-02-27 Thu] -- Phase 7 complete: Design system polish. 7/7 phases, 13 ADRs, 162 tests passing/
